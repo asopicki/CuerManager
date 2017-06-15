@@ -28,7 +28,7 @@ pub enum DocumentsError {
     SearchError
 }
 
-pub fn get_cuesheets() -> Result<Vec<CuesheetDocument>, DocumentsError> {
+pub fn get_cuesheets(query: &str) -> Result<Vec<CuesheetDocument>, DocumentsError> {
 
     //TODO: Use constants instead of hard coded values
     let mut client = match Client::new(DEFAULT_URL) {
