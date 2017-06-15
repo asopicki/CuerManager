@@ -1,0 +1,10 @@
+[global]
+address = "localhost"
+
+[development]
+port = 8087
+log = "normal"
+
+[staging]
+port = 8086
+log = "normal"

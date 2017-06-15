@@ -1,0 +1,19 @@
+[package]
+name = "cuer_manager"
+version = "0.1.0"
+authors = ["Alexander Sopicki"]
+build = "build.rs"
+
+[dependencies]
+
+rocket = "0.2.8"
+rocket_codegen = "0.2.8"
+rs-es = "0.10.0"
+json_str = "*"
+serde = "*"
+serde_json = "*"
+serde_derive = "*"
+
+
+[dev-dependencies]
+rocket = { version = "0.2.8", features = ["testing"] }

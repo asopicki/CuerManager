@@ -1,0 +1,11 @@
+target
+.idea
+cuer_manager.iml
+static/js/.editorconfig
+static/js/.DS_Store
+static/js/node_modules/
+static/js/dist/
+static/js/npm-debug.log*
+static/js/yarn-debug.log*
+static/js/yarn-error.log*
+static/js/test/unit/coverage
