@@ -60,7 +60,7 @@ let _phases = ['II', 'III', 'IV', 'V', 'VI']
 
 export default {
   data: function () {
-    let request = new Request('http://localhost:8087/cuesheets/all')
+    let request = new Request('http://localhost:8087/search/all')
     let data = {
       cuesheets: [],
       phases: _phases

@@ -13,6 +13,8 @@ json_str = "*"
 serde = "*"
 serde_json = "*"
 serde_derive = "*"
+unescape = "0.1.0"
+comrak = "0.1.4"
 
 
 [dev-dependencies]

@@ -1,5 +1,5 @@
-use std::fs::File;
-use std::io::Read;
+use serde_json::from_str;
+use serde_json::Value;
 
 use rocket::testing::MockRequest;
 use rocket::http::Method::*;
@@ -8,43 +8,24 @@ use rocket::http::Status;
 use super::rocket;
 
 #[test]
-fn test_static_test_file() {
-    test_query_file("/static/test.txt", "static/test.txt", Status::Ok, true);
+fn test_cuesheet_list() {
+   test_query_cuesheets("all", Status::Ok, true);
 }
 
-#[test]
-fn directory_traversal_test() {
-    test_query_file(
-        "/static/../../../../../../../../../../../../../etc/debian_version",
-        "static/../../../../../../../../../../../../../etc_debian_version",
-        Status::NotFound,
-        false
-    );
-}
-
-fn test_query_file<T> (path: &str, file: T, status: Status, check_content: bool)
-    where T: Into<Option<&'static str>>
-{
+fn test_query_cuesheets(query: &str, status: Status, check_size: bool) {
     let rocket = rocket();
-    let mut req = MockRequest::new(Get, &path);
+    let mut req = MockRequest::new(Get, "/search/".to_owned() + query);
 
     let mut response = req.dispatch_with(&rocket);
     assert_eq!(response.status(), status);
 
-    if check_content {
-        let body_data = response.body().and_then(|body| body.into_bytes());
-        if let Some(filename) = file.into() {
-            let expected_data = read_file_content(filename);
-            assert!(body_data.map_or(false, |s| s == expected_data));
-        }
+    if check_size {
+        let body_data = response.body().and_then(|body| body.into_string()).unwrap_or("[]".to_string());
+
+        let data: Value = from_str(&body_data.to_string()).unwrap();
+
+
+        assert!(data.as_array().unwrap().len() > 0)
     }
 }
 
-
-fn read_file_content(path: &str) -> Vec<u8> {
-    let mut fp = File::open(&path).expect(&format!("Can not open {}", path));
-    let mut file_content = vec![];
-
-    fp.read_to_end(&mut file_content).expect(&format!("Reading {} failed.", path));
-    file_content
-}
