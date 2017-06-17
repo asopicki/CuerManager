@@ -9,6 +9,8 @@ extern crate serde_derive;
 
 extern crate serde;
 extern crate serde_json;
+extern crate unescape;
+extern crate comrak;
 
 #[cfg(test)]
 mod tests;
@@ -19,14 +21,20 @@ use std::io;
 use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 
-use documents::get_cuesheets;
-use documents::CuesheetDocument;
+use documents::{get_cuesheets, get_cuesheet};
+use documents::CuesheetMetaData;
 
 use rocket::response::{content, NamedFile};
 
 #[get("/cuesheets/<id>")]
-fn cuesheet_by_id(id: &str) -> String {
-    return "".to_owned();
+fn cuesheet_by_id(id: &str) -> Option<content::HTML<String>> {
+    return match get_cuesheet(id) {
+        Ok(cuesheet) => {
+            let html = content::HTML(*cuesheet);
+            Some(html)
+        },
+        _ => None
+    };
 }
 
 #[get("/search/<query>")]
@@ -47,7 +55,7 @@ fn search_cuesheets(query: &str) -> content::JSON<String> {
     }
 }
 
-fn _query_cuesheets(query: &str) -> io::Result<Vec<CuesheetDocument>> {
+fn _query_cuesheets(query: &str) -> io::Result<Vec<CuesheetMetaData>> {
     let res = match get_cuesheets(query) {
         Ok(cuesheets) => Ok(cuesheets),
 
