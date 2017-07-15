@@ -1,7 +1,7 @@
 <template>
   <tr>
     <td>
-      <a :href="'http://localhost:8087/cuesheets/' + cuesheet.id" target="_blank" :title="cuesheet.title" rel="noopener noreferer">
+      <a :href="'/cuesheets/' + cuesheet.id" target="_blank" :title="cuesheet.title" rel="noopener noreferer">
         {{cuesheet.title}}
       </a>
     </td>

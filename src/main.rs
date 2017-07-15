@@ -67,13 +67,13 @@ fn _query_cuesheets(query: &str) -> io::Result<Vec<CuesheetMetaData>> {
 
 #[get("/")]
 fn index() -> io::Result<NamedFile> {
-    NamedFile::open("static/js/dist/index.html")
+    NamedFile::open("public/index.html")
 }
 
 #[get("/static/<file..>")]
 
 fn static_files(file: PathBuf) -> Option<NamedFile> {
-    let path = Path::new("static/js/dist/static").join(file);
+    let path = Path::new("public").join(file);
     //let filepath = path.as_path().as_os_str().to_os_string().into_string().unwrap();
     //println!("Path: {}", filepath);
     NamedFile::open(path).ok()
