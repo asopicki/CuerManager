@@ -27,10 +27,10 @@ use documents::CuesheetMetaData;
 use rocket::response::{content, NamedFile};
 
 #[get("/cuesheets/<id>")]
-fn cuesheet_by_id(id: &str) -> Option<content::HTML<String>> {
-    return match get_cuesheet(id) {
+fn cuesheet_by_id(id: String) -> Option<content::Html<String>> {
+    return match get_cuesheet(&id) {
         Ok(cuesheet) => {
-            let html = content::HTML(*cuesheet);
+            let html = content::Html(*cuesheet);
             Some(html)
         },
         _ => None
@@ -38,25 +38,25 @@ fn cuesheet_by_id(id: &str) -> Option<content::HTML<String>> {
 }
 
 #[get("/search/<query>")]
-fn search_cuesheets(query: &str) -> content::JSON<String> {
+fn search_cuesheets(query: String) -> content::Json<String> {
 
     if query.eq("all") {
-        match _query_cuesheets(query) {
+        match _query_cuesheets() {
             Err(e) => {
                 println!("An error occured reading the cuesheet list: {:?}", e);
-                return content::JSON("[]".to_string());
+                return content::Json("[]".to_string());
             },
             Ok(contents) => {
-                return content::JSON(serde_json::to_string(&contents).unwrap());
+                return content::Json(serde_json::to_string(&contents).unwrap());
             }
         };
     } else {
-        return content::JSON("[]".to_string());
+        return content::Json("[]".to_string());
     }
 }
 
-fn _query_cuesheets(query: &str) -> io::Result<Vec<CuesheetMetaData>> {
-    let res = match get_cuesheets(query) {
+fn _query_cuesheets() -> io::Result<Vec<CuesheetMetaData>> {
+    let res = match get_cuesheets() {
         Ok(cuesheets) => Ok(cuesheets),
 
         Err(_) => Err(Error::new(ErrorKind::InvalidData, "Getting search results failed"))

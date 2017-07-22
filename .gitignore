@@ -9,3 +9,4 @@ static/js/npm-debug.log*
 static/js/yarn-debug.log*
 static/js/yarn-error.log*
 static/js/test/unit/coverage
+CuerManager.iml

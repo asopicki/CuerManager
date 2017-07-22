@@ -102,7 +102,7 @@ pub fn get_cuesheet(id: &str) -> Result<Box<String>, DocumentsError> {
     //return Err(DocumentsError::SearchError)
 }
 
-pub fn get_cuesheets(query: &str) -> Result<Vec<CuesheetMetaData>, DocumentsError> {
+pub fn get_cuesheets() -> Result<Vec<CuesheetMetaData>, DocumentsError> {
 
     let mut client = get_client().unwrap();
 
