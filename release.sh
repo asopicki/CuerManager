@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="0.1.0"
+VERSION="0.3.0"
 
 echo "Building application for release..."
 cargo build --release

@@ -1,13 +1,13 @@
 [package]
 name = "cuer_manager"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Alexander Sopicki"]
 build = "build.rs"
 
 [dependencies]
 
-rocket = "0.2.8"
-rocket_codegen = "0.2.8"
+rocket = "0.2.9"
+rocket_codegen = "0.2.9"
 rs-es = "0.10.0"
 json_str = "*"
 serde = "*"
@@ -18,4 +18,4 @@ comrak = "0.1.4"
 
 
 [dev-dependencies]
-rocket = { version = "0.2.8", features = ["testing"] }
+rocket = { version = "0.2.9", features = ["testing"] }
