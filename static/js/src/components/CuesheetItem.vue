@@ -11,8 +11,6 @@
     <td>
       {{cuesheet.phase}} <span v-if="cuesheet.plusfigures !== 'null'">{{cuesheet.plusfigures}}</span>
     </td>
-    <td v-if="cuesheet.plusfigures !== 'null'">{{cuesheet.plusfigures}}</td>
-    <td v-else></td>
   </tr>
 </template>
 

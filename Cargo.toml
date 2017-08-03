@@ -17,4 +17,8 @@ hyper = "^0.10.11"
 unescape = "0.1.0"
 comrak = "0.1.4"
 
+[dependencies.rocket_contrib]
+version = "*"
+default-features = false
+features = ["json"]
 

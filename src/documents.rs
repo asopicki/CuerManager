@@ -102,15 +102,59 @@ pub fn get_cuesheet(id: &str) -> Result<Box<String>, DocumentsError> {
     //return Err(DocumentsError::SearchError)
 }
 
-pub fn get_cuesheets() -> Result<Vec<CuesheetMetaData>, DocumentsError> {
+pub fn get_cuesheets_by_phase(phase: &str) -> Result<Vec<CuesheetMetaData>, DocumentsError> {
 
     let mut client = get_client().unwrap();
+
+    let query = &Query::build_match("phase", phase).build();
 
     let result: search::SearchResult<Value> = match client
         .search_query()
         .with_indexes(&[CUESHEET_INDEX])
         .with_types(&[CUESHEET_TYPE])
-        .with_query(&Query::build_match_all().build())
+        .with_query(query)
+        .with_size(MAX_RESULTS)
+        .send() {
+        Ok(result) => result,
+        Err(e) => {
+            println!("An error occured obtaining search result: {:?}", e);
+            return Err(DocumentsError::SearchError);
+        }
+    };
+
+    let mut cuesheets: Vec<CuesheetMetaData> = Vec::new();
+
+    for result in result.hits.hits {
+        let cuesheet: Option<CuesheetMetaData> = CuesheetMetaData::from(&result.source, result.id);
+
+        match cuesheet {
+            Some(c) => {
+                cuesheets.push(c)
+            }
+            None => {
+                continue;
+            }
+        }
+
+    }
+
+    return Ok(cuesheets);
+}
+
+pub fn get_cuesheets(query: &str) -> Result<Vec<CuesheetMetaData>, DocumentsError> {
+
+    let mut client = get_client().unwrap();
+
+    let query = &Query::build_query_string(query)
+        .with_default_field("content")
+        .with_fields(vec!["title".to_owned(), "rhythm".to_owned()]).build();
+
+
+    let result: search::SearchResult<Value> = match client
+        .search_query()
+        .with_indexes(&[CUESHEET_INDEX])
+        .with_types(&[CUESHEET_TYPE])
+        .with_query(query)
         .with_size(MAX_RESULTS)
         .send() {
         Ok(result) => result,
