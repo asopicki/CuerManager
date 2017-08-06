@@ -1,0 +1,47 @@
+.searchInput {
+
+    margin-left: 2%;
+
+}
+
+.search label {
+    margin-left: 1em;
+    margin-right: 0.8em;
+}
+
+.search input {
+    width: 40em;
+}
+
+.searchButtons {
+    padding-top: 2em;
+    padding-left: 5.3em;
+}
+
+.resultList {
+    text-align: center;
+}
+
+.resultList table  {
+
+    border: 1px solid black;
+    border-collapse: collapse;
+    width: 95%;
+    margin: auto;
+}
+
+.resultList thead td {
+    font-weight: bold;
+    border: 1px solid black;
+    background-color: rgb(38,73,114);
+    color: white;
+}
+
+.resultList tbody td {
+    border: 1px solid black;
+}
+
+a.link {
+    color: rgb(25,20,91);
+    font-weight: bold;
+}

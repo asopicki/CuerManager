@@ -83,6 +83,22 @@ fn _query_cuesheets(query: &str) -> io::Result<Vec<documents::CuesheetMetaData>>
     return res;
 }
 
+#[get("/favicon.ico")]
+fn favicon() -> io::Result<NamedFile> {
+    NamedFile::open("public/favicon.ico")
+}
+
+#[get("/service-worker.js")]
+fn service_worker() -> io::Result<NamedFile> {
+    NamedFile::open("public/service-worker.js")
+}
+
+#[get("/index.html?<query>")]
+fn index_precache(query: &str) -> io::Result<NamedFile> {
+    NamedFile::open("public/index.html")
+}
+
+
 #[get("/")]
 fn index() -> io::Result<NamedFile> {
     NamedFile::open("public/index.html")
@@ -99,7 +115,7 @@ fn static_files(file: PathBuf) -> Option<NamedFile> {
 
 fn rocket() -> rocket::Rocket {
     rocket::ignite().mount("/", routes![index, static_files, search_cuesheets,
-        cuesheet_by_id, search_by_phase])
+        cuesheet_by_id, search_by_phase, favicon, service_worker, index_precache])
 }
 
 fn main() {

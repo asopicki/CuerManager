@@ -1,18 +1,18 @@
 #!/bin/bash
 
-VERSION="0.3.0"
+VERSION="0.4.0"
 
-echo "Building application for release..."
+cd ui
+echo "Building web frontend ..."
+yarn build
+
+cd ../
+
+rsync -av ui/build/static/ public/
+cp ui/build/* public/
+
+echo "Starting application..."
 cargo build --release
-
-cd static/js
-echo "Building Ember app for release..."
-node build/build.js
-
-cd ../../
-
-rsync -av static/js/dist/static/ public/
-cp static/js/dist/index.html public/
 
 cp -r public target/release/
 cd target
