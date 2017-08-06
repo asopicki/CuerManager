@@ -1,8 +1,7 @@
 [package]
 name = "cuer_manager"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Alexander Sopicki"]
-build = "build.rs"
 
 [dependencies]
 
