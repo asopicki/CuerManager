@@ -12,9 +12,11 @@ function SearchButton(props) {
 
 function SearchRow(props) {
 
+    let url = '/cuesheets/' + props.cuesheetId;
+
     return  (
         <tr>
-           <td>{props.title}</td>
+           <td><a href={url} target="_blank">{props.title}</a></td>
            <td>{props.rhythm}</td>
            <td>{props.phase}</td>
         </tr>
@@ -25,7 +27,7 @@ function SearchRow(props) {
 function SearchResult(props) {
 
     const listRows = props.searchResult.map(result =>
-            <SearchRow title={result.title} rhythm={result.rhythm} phase={result.phase} />);
+            <SearchRow cuesheetId={result.id} title={result.title} rhythm={result.rhythm} phase={result.phase} />);
 
     return (
         <div className="resultList">
