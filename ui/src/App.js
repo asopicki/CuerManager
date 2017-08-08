@@ -20,6 +20,7 @@ function SearchRow(props) {
            <td><a href={url} target="_blank">{props.title}</a></td>
            <td className="textcenter">{props.rhythm}</td>
            <td className="textcenter">{props.phase}</td>
+           <td className="textcenter">{props.score}</td>
         </tr>
     );
 
@@ -27,8 +28,12 @@ function SearchRow(props) {
 
 function SearchResult(props) {
 
-    const listRows = props.searchResult.map(result =>
-            <SearchRow cuesheetId={result.id} title={result.title} rhythm={result.rhythm} phase={result.phase} />);
+    const listRows = props.searchResult.map(result => {
+        let score = result.score.toFixed(2);
+
+        return (<SearchRow cuesheetId={result.id} title={result.title} rhythm={result.rhythm} phase={result.phase}
+            score={score} />)
+    });
 
     return (
         <div className="resultList">
@@ -39,6 +44,7 @@ function SearchResult(props) {
                         <td className="textcenter">Title</td>
                         <td className="textcenter">Rhythm</td>
                         <td className="textcenter">Phase</td>
+                        <td className="textcenter">Score</td>
                     </tr>
                 </thead>
                 <tbody>
@@ -101,13 +107,17 @@ class App extends Component {
             return response.json()
         }).then((result) => {
             self.setState({
-                searchResult: _.orderBy(result, ['phase', 'title'])
+                searchResult: _.orderBy(result, ['score', 'phase', 'title'], ['desc', 'asc', 'asc'])
             })
         });
     }
 
     handleSearchByPhase(phase) {
-        this.handleSearch('phase/'+phase);
+        this.handleSearch('phase:'+phase);
+    }
+
+    handleSearchByRhythm(rhythm) {
+        this.handleSearch('rhythm:'+rhythm);
     }
 
     render() {
@@ -128,7 +138,7 @@ class App extends Component {
                     let alt = 'Quick search for cuesheets for the rhythm '+ rhythm;
 
                     return (<SearchButton name={name} alt={alt}
-                                onClick={() => this.handleSearch(rhythm)} />)
+                                onClick={() => this.handleSearchByRhythm(rhythm)} />)
         });
 
         return (

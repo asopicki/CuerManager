@@ -1,5 +1,6 @@
 use rs_es::Client;
 use rs_es::query::Query;
+use rs_es::query::full_text;
 use rs_es::operations::get::GetResult;
 
 use rs_es::operations::search;
@@ -25,7 +26,8 @@ pub struct CuesheetMetaData {
     title: String,
     phase: String,
     plusfigures: String,
-    rhythm: String
+    rhythm: String,
+    score: f64
 }
 
 impl CuesheetMetaData {
@@ -35,33 +37,31 @@ impl CuesheetMetaData {
             title: String::from(""),
             phase: String::from(""),
             plusfigures: String::from(""),
-            rhythm: String::from("")
+            rhythm: String::from(""),
+            score: 0.0
         }
     }
 
-    fn from(obj: &Option<Box<Value>>, id: String) -> Option<CuesheetMetaData> {
+    fn from(obj: &Option<Box<Value>>, id: String, score: Option<f64>) -> Option<CuesheetMetaData> {
         match obj {
             &Some(ref v) => {
                 let mut cuesheet = CuesheetMetaData::new();
                 cuesheet.id = id.clone();
+                cuesheet.score = score.unwrap_or(0.0);
 
                 match v.deref() {
                     &Value::Object(ref obj) => {
 
-                        match obj["metadata"] {
-                            Value::Object(ref obj) => {
-                                cuesheet.title = String::from(obj.get("title").unwrap_or(&Value::from("")).to_string()).trim_matches('"').to_string();
-                                cuesheet.rhythm = String::from(obj.get("rhythm").unwrap_or(&Value::from("")).to_string()).trim_matches('"').to_string();
-                                cuesheet.phase = String::from(obj.get("phase").unwrap_or(&Value::from("")).to_string()).trim_matches('"').to_string();
-                                cuesheet.plusfigures = String::from(obj.get("plusfigures").unwrap_or(&Value::from("")).to_string()).trim_matches('"').to_string();
-                            },
-                            _ => return None
-                        };
+                        cuesheet.title = String::from(obj.get("title").unwrap_or(&Value::from("")).to_string()).trim_matches('"').to_string();
+                        cuesheet.phase = String::from(obj.get("phase").unwrap_or(&Value::from("")).to_string()).trim_matches('"').to_string();
+                        cuesheet.plusfigures= String::from(obj.get("plusfigures").unwrap_or(&Value::from("")).to_string()).trim_matches('"').to_string();
+                        cuesheet.rhythm = String::from(obj.get("rhythm").unwrap_or(&Value::from("")).to_string()).trim_matches('"').to_string();
 
                         Some(cuesheet)
                     },
                     _ => None
                 }
+
             },
             _ => None,
         }
@@ -71,6 +71,13 @@ impl CuesheetMetaData {
 #[derive(Debug)]
 pub enum DocumentsError {
     SearchError,
+}
+
+#[derive(Debug)]
+pub enum SearchType {
+    PhaseSearch,
+    RhythmSearch,
+    StringSearch
 }
 
 pub fn get_cuesheet(id: &str) -> Result<Box<String>, DocumentsError> {
@@ -102,11 +109,37 @@ pub fn get_cuesheet(id: &str) -> Result<Box<String>, DocumentsError> {
     //return Err(DocumentsError::SearchError)
 }
 
-pub fn get_cuesheets_by_phase(phase: &str) -> Result<Vec<CuesheetMetaData>, DocumentsError> {
+pub fn get_cuesheets(query: &str) -> Result<Vec<CuesheetMetaData>, DocumentsError> {
 
+    let has_search_prefix = query.contains(":");
+
+    if has_search_prefix {
+        let parts = query.splitn(2, ":").collect::<Vec<_>>();
+        let mut iter = parts.iter();
+        let (search_type, search_string) = (iter.next().unwrap(), iter.next().unwrap());
+
+        let search_type = match *search_type {
+            "phase" => SearchType::PhaseSearch,
+            "rhythm" => SearchType::RhythmSearch,
+            _ => SearchType::StringSearch
+        };
+
+        let search_query = match search_type {
+            SearchType::PhaseSearch => build_match_query("phase", search_string),
+            SearchType::RhythmSearch => build_match_query("rhythm", search_string),
+            SearchType::StringSearch => build_default_query(query)
+        };
+
+        return run_search(&search_query);
+    } else {
+        return run_search(&build_default_query(&query));
+    }
+
+
+}
+
+fn run_search(query: &Query) -> Result<Vec<CuesheetMetaData>, DocumentsError>  {
     let mut client = get_client().unwrap();
-
-    let query = &Query::build_match("phase", phase).build();
 
     let result: search::SearchResult<Value> = match client
         .search_query()
@@ -125,7 +158,7 @@ pub fn get_cuesheets_by_phase(phase: &str) -> Result<Vec<CuesheetMetaData>, Docu
     let mut cuesheets: Vec<CuesheetMetaData> = Vec::new();
 
     for result in result.hits.hits {
-        let cuesheet: Option<CuesheetMetaData> = CuesheetMetaData::from(&result.source, result.id);
+        let cuesheet: Option<CuesheetMetaData> = CuesheetMetaData::from(&result.source, result.id, result.score);
 
         match cuesheet {
             Some(c) => {
@@ -141,46 +174,20 @@ pub fn get_cuesheets_by_phase(phase: &str) -> Result<Vec<CuesheetMetaData>, Docu
     return Ok(cuesheets);
 }
 
-pub fn get_cuesheets(query: &str) -> Result<Vec<CuesheetMetaData>, DocumentsError> {
+fn build_match_query(term: &str, query: &str) -> Query {
+    Query::build_match(term, query).with_operator("and").build()
+}
 
-    let mut client = get_client().unwrap();
+fn build_default_query(query: &str) -> Query {
+    Query::build_match("content", query).with_type(full_text::MatchType::PhrasePrefix)
+        .with_slop(10).build()
 
-    let query = &Query::build_query_string(query)
-        .with_default_field("content")
-        .with_fields(vec!["title".to_owned(), "rhythm".to_owned()]).build();
-
-
-    let result: search::SearchResult<Value> = match client
-        .search_query()
-        .with_indexes(&[CUESHEET_INDEX])
-        .with_types(&[CUESHEET_TYPE])
-        .with_query(query)
-        .with_size(MAX_RESULTS)
-        .send() {
-        Ok(result) => result,
-        Err(e) => {
-            println!("An error occured obtaining search result: {:?}", e);
-            return Err(DocumentsError::SearchError);
-        }
-    };
-
-    let mut cuesheets: Vec<CuesheetMetaData> = Vec::new();
-
-    for result in result.hits.hits {
-        let cuesheet: Option<CuesheetMetaData> = CuesheetMetaData::from(&result.source, result.id);
-
-        match cuesheet {
-            Some(c) => {
-                cuesheets.push(c)
-            }
-            None => {
-                continue;
-            }
-        }
-
-    }
-
-    return Ok(cuesheets);
+//    Query::build_bool()
+//        .with_must(Query::build_match("content", query).with_boost(0.5).build())
+//        .with_should(vec![
+//            Query::build_wildcard("title", query).build(),
+//            Query::build_wildcard("rhythm", query).build()
+//        ]).build()
 }
 
 fn get_client() -> Result<Client, DocumentsError> {
@@ -192,3 +199,4 @@ fn get_client() -> Result<Client, DocumentsError> {
         }
     };
 }
+

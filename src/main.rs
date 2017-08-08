@@ -35,20 +35,6 @@ fn cuesheet_by_id(id: String) -> Option<content::Html<String>> {
     };
 }
 
-#[get("/search/phase/<phase>")]
-fn search_by_phase(phase: String) -> rocket_contrib::Json<Vec<documents::CuesheetMetaData>> {
-    match _query_cuesheets_by_phrase(&phase) {
-        Err(e) => {
-            println!("An error occured reading the cuesheet list: {:?}", e);
-            let vec: Vec<documents::CuesheetMetaData> = Vec::new();
-            return rocket_contrib::Json(vec);
-        },
-        Ok(contents) => {
-            return rocket_contrib::Json(contents);
-        }
-    }
-}
-
 #[get("/search/<query>")]
 fn search_cuesheets(query: String) -> content::Json<String> {
 
@@ -61,16 +47,6 @@ fn search_cuesheets(query: String) -> content::Json<String> {
             return content::Json(serde_json::to_string(&contents).unwrap());
         }
     };
-}
-
-fn _query_cuesheets_by_phrase(phase: &str) -> io::Result<Vec<documents::CuesheetMetaData>> {
-    let res = match documents::get_cuesheets_by_phase(phase) {
-        Ok(cuesheets) => Ok(cuesheets),
-
-        Err(_) => Err(Error::new(ErrorKind::InvalidData, "Getting search results failed"))
-    };
-
-    return res;
 }
 
 fn _query_cuesheets(query: &str) -> io::Result<Vec<documents::CuesheetMetaData>> {
@@ -88,17 +64,6 @@ fn favicon() -> io::Result<NamedFile> {
     NamedFile::open("public/favicon.ico")
 }
 
-#[get("/service-worker.js")]
-fn service_worker() -> io::Result<NamedFile> {
-    NamedFile::open("public/service-worker.js")
-}
-
-#[get("/index.html?<query>")]
-fn index_precache(query: &str) -> io::Result<NamedFile> {
-    NamedFile::open("public/index.html")
-}
-
-
 #[get("/")]
 fn index() -> io::Result<NamedFile> {
     NamedFile::open("public/index.html")
@@ -115,7 +80,7 @@ fn static_files(file: PathBuf) -> Option<NamedFile> {
 
 fn rocket() -> rocket::Rocket {
     rocket::ignite().mount("/", routes![index, static_files, search_cuesheets,
-        cuesheet_by_id, search_by_phase, favicon, service_worker, index_precache])
+        cuesheet_by_id, favicon])
 }
 
 fn main() {
