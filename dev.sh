@@ -1,7 +1,5 @@
 #!/bin/bash
 
-VERSION="0.1.0"
-
 mkdir -p public
 
 cd ui

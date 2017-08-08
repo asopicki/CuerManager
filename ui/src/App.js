@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import _ from 'lodash';
 import './App.css';
 
 function SearchButton(props) {
@@ -17,8 +18,8 @@ function SearchRow(props) {
     return  (
         <tr>
            <td><a href={url} target="_blank">{props.title}</a></td>
-           <td>{props.rhythm}</td>
-           <td>{props.phase}</td>
+           <td className="textcenter">{props.rhythm}</td>
+           <td className="textcenter">{props.phase}</td>
         </tr>
     );
 
@@ -32,12 +33,12 @@ function SearchResult(props) {
     return (
         <div className="resultList">
             <h2>Search result</h2>
-            <table>
+            <table className="textleft">
                 <thead>
                     <tr>
-                        <td>Title</td>
-                        <td>Rhythm</td>
-                        <td>Phase</td>
+                        <td className="textcenter">Title</td>
+                        <td className="textcenter">Rhythm</td>
+                        <td className="textcenter">Phase</td>
                     </tr>
                 </thead>
                 <tbody>
@@ -100,7 +101,7 @@ class App extends Component {
             return response.json()
         }).then((result) => {
             self.setState({
-                searchResult: result
+                searchResult: _.orderBy(result, ['phase', 'title'])
             })
         });
     }

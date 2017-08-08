@@ -39,6 +39,19 @@
 
 .resultList tbody td {
     border: 1px solid black;
+    padding-left: 0.2em;
+}
+
+.textleft {
+    text-align: left;
+}
+
+.textright {
+    text-align: right;
+}
+
+.textcenter {
+    text-align: center;
 }
 
 a.link {
