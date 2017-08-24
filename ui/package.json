@@ -1,7 +1,7 @@
 {
   "name": "CueingManagerUI",
   "description": "A web UI for managing cuesheets and events",
-  "version": "0.1.0",
+  "version": "0.4.2",
   "private": true,
   "dependencies": {
     "react": "^15.6.1",

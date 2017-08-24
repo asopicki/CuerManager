@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="0.4.1"
+VERSION="0.4.2"
 
 cd ui
 echo "Building web frontend ..."
