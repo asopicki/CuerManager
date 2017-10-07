@@ -17,5 +17,5 @@ ui/yarn-debug.log*
 ui/yarn-error.log*
 
 
-public*
+public/*
 CuerManager.iml

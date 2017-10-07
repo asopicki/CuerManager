@@ -1,15 +1,5 @@
 #!/bin/bash
 
-mkdir -p public
+echo "Starting web frontend in development mode..."
 
-cd ui
-echo "Building web frontend ..."
-yarn build
-
-cd ../
-
-rsync -av ui/build/static/ public/
-cp ui/build/* public/
-
-echo "Starting application..."
-cargo run
+yarn start

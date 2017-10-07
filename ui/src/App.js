@@ -19,7 +19,7 @@ function SearchRow(props) {
         <tr>
            <td><a href={url} target="_blank">{props.title}</a></td>
            <td className="textcenter">{props.rhythm}</td>
-           <td className="textcenter">{props.phase}</td>
+           <td className="textcenter">{props.phase} {props.plusfigures}</td>
            <td className="textcenter">{props.score}</td>
         </tr>
     );
@@ -32,7 +32,7 @@ function SearchResult(props) {
         let score = result.score.toFixed(2);
 
         return (<SearchRow cuesheetId={result.id} title={result.title} rhythm={result.rhythm} phase={result.phase}
-            score={score} />)
+            score={score} plusfigures={result.plusfigures} />)
     });
 
     return (
@@ -131,25 +131,43 @@ class App extends Component {
                         onClick={() => this.handleSearchByPhase(phase)} />)
         });
 
-        let rhythmButtons = [ 'Two Step', 'Waltz', 'Cha-Cha-Cha', 'Rumba', 'Foxtrot', 'Tango', 'Bolero', 'Mambo',
-            'Quickstep', 'Jive', 'Slow Two Step', 'Samba', 'Paso Doble', 'Single Swing', 'West Coast Swing',
-            'Argentine Tango', 'Hesitation Canter Waltz'].map(rhythm => {
-                    let name = rhythm;
+        let mainRhythmButtons = [ 'Two Step', 'Waltz', 'Cha-Cha-Cha', 'Rumba', 'Foxtrot', 'Tango'].map(rhythm => {
+            let name = rhythm;
+            let alt = 'Quick search for cuesheets for the rhythm '+ rhythm;
+
+            return (<SearchButton name={name} alt={alt}
+                        onClick={() => this.handleSearchByRhythm(rhythm)} />)
+        });
+
+
+        let advancedRhythmButtons = ['Bolero', 'Mambo', 'Quickstep', 'Jive', 'Slow Two Step', 'Samba'].map(rhythm => {
+            let name = rhythm;
                     let alt = 'Quick search for cuesheets for the rhythm '+ rhythm;
 
-                    return (<SearchButton name={name} alt={alt}
-                                onClick={() => this.handleSearchByRhythm(rhythm)} />)
+            return (<SearchButton name={name} alt={alt}
+                        onClick={() => this.handleSearchByRhythm(rhythm)} />)
+        });
+
+        let additionalRhythmButtons = [ 'Single Swing', 'West Coast Swing', 'Paso Doble', 'Argentine Tango',
+                                        'Hesitation Canter Waltz'].map(rhythm => {
+            let name = rhythm;
+            let alt = 'Quick search for cuesheets for the rhythm '+ rhythm;
+
+            return (<SearchButton name={name} alt={alt}
+                        onClick={() => this.handleSearchByRhythm(rhythm)} />)
         });
 
         return (
             <div className="App">
                 <div className="searchInput">
-                    <h1>Cueing Manager - Cuesheet list</h1>
+                    <h1>Cueing Manager - Cuesheet search</h1>
                     <div className="search">
                         <SearchForm submitHandler={(query) => self.handleSearch(query)}/>
                         <div className="searchButtons">
-                            <div>{phaseButtons}</div>
-                            <div>{rhythmButtons}</div>
+                            <div className="phaseSearchButtons">{phaseButtons}</div>
+                            <div className="rhythmSearchButtons">{mainRhythmButtons}</div>
+                            <div className="rhythmSearchButtons">{advancedRhythmButtons}</div>
+                            <div className="rhythmSearchButtons">{additionalRhythmButtons}</div>
                         </div>
                     </div>
                 </div>
