@@ -14,8 +14,11 @@ class App extends Component {
 
 	render() {
 		 return (<Router>
-		    <div>
-		        <div class="menu">
+		    <div className="container">
+		        <div className="header">
+                    <h1>Cueing Manager</h1>
+                </div>
+		        <div className="sidebar">
 		            <ul>
 		                <li><Link to="/">Search</Link></li>
 		                <li><Link to="/playlists">Playlists</Link></li>
@@ -23,9 +26,12 @@ class App extends Component {
 		        </div>
 
 				<div className="App">
-					<h1>Cueing Manager - Cuesheet search</h1>
+					<h2>Cuesheet search</h2>
 		            <Route exact path="/" component={Search} />
 		            <Route path="/playlists" component={PlaylistManager} />
+		        </div>
+		        <div className="footer">
+		            <em>&copy; 2017 - Alexander Sopicki</em>
 		        </div>
 		    </div>
 		 </Router>);
