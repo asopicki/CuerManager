@@ -20,6 +20,7 @@ function SearchRow(props) {
            <td className="textcenter">{props.rhythm}</td>
            <td className="textcenter">{props.phase} {props.plusfigures}</td>
            <td className="textcenter">{props.score}</td>
+           <td className="textcenter">addToList</td>
         </tr>
     );
 
@@ -44,6 +45,7 @@ function SearchResult(props) {
                         <td className="textcenter">Rhythm</td>
                         <td className="textcenter">Phase</td>
                         <td className="textcenter">Score</td>
+                        <td className="textcenter"></td>
                     </tr>
                 </thead>
                 <tbody>
@@ -157,6 +159,7 @@ class Search extends Component {
 
         return (
             <div>
+                <h2>Cuesheet search</h2>
 		        <div className="searchInput">
 		            <div className="search">
 		                <SearchForm submitHandler={(query) => self.handleSearch(query)}/>

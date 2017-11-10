@@ -6,44 +6,6 @@ import {
 } from 'react-router-dom'
 import _ from 'lodash';
 
-var playlistData = [{
-  id: "1234566",
-  name: "Bavarian Festival",
-  Cuesheets: [
-      {
-          title: "All shook up",
-          id: "AV6t1klvHh_QOGz32LnF"
-      },
-      {
-          title: "Rock-Paper-Scissors",
-          id: "AV6t1kl3Hh_QOGz32LnI"
-      },
-      {
-          title: "Watermark",
-          id: "AV6t1kkEHh_QOGz32Lmi"
-      }
-  ]
-},
-{
-  id: "abcdefg",
-  name: "Tamara Clubabend",
-  Cuesheets: [
-   {
-          title: "Test",
-          id: "AV6t1klvHh_QOGz32LnF"
-      },
-      {
-          title: "Test",
-          id: "AV6t1kl3Hh_QOGz32LnI"
-      },
-      {
-          title: "Watermark",
-          id: "AV6t1kkEHh_QOGz32Lmi"
-      }
-  ]
-
-}];
-
 class Playlist extends Component {
 
 	constructor() {
@@ -52,7 +14,7 @@ class Playlist extends Component {
 		this.state = {
 			playlist: {
 				name: "",
-				Cuesheets: [],
+				cuesheets: [],
 				id: ""
 			},
 		}
@@ -60,15 +22,13 @@ class Playlist extends Component {
 
 	fetchPlaylist(id) {
 		let self = this
-        let request = new Request('/');
+        let request = new Request('/playlists/' +id);
 
         fetch(request).then(function (response) {
-            return response
+            return response.json()
         }).then((result) => {
 
-            const playlist = _.find(playlistData, function(playlist) {
-                                                 return playlist.id === id;
-			});
+            const playlist = result;
 
             self.setState({
                 playlist: playlist,
@@ -82,7 +42,7 @@ class Playlist extends Component {
 			this.fetchPlaylist(this.props.match.params.id);
 		}
 
-		const cuesheetList = this.state.playlist.Cuesheets.map(cuesheet => {
+		const cuesheetList = this.state.playlist.cuesheets.map(cuesheet => {
 			let url = "/cuesheets/"+cuesheet.id;
 			return (<li><a href={url} target="_blank">{cuesheet.title}</a></li>);
 		});
@@ -154,11 +114,10 @@ class PlaylistSearch extends Component {
 
     fetchPlaylists() {
         let self = this
-        let request = new Request('/');
+        let request = new Request('/playlists');
 
         fetch(request).then(function (response) {
-            return playlistData;
-
+            return response.json();
         }).then((result) => {
             self.setState({
                 playlistResult: _.orderBy(result, ['name'], ['asc']),

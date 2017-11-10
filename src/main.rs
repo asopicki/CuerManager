@@ -17,12 +17,51 @@ extern crate comrak;
 mod tests;
 
 mod documents;
+mod playlists;
 
 use std::io;
 use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 
 use rocket::response::{content, NamedFile};
+
+#[delete("/playlists/<id>/song/<song_id>")]
+fn remove_song_from_playlist(id: String, song_id: String) -> content::Json<String> {
+    return content::Json("{}".to_string());
+}
+
+#[put("/playlists/<id>/song/<song_id>")]
+fn add_song_to_playlist(id: String, song_id: String) -> content::Json<String> {
+    return content::Json("{}".to_string());
+}
+
+#[delete("/playlists/<id>")]
+fn delete_playlist(id: String) -> content::Json<String> {
+    return content::Json("{result: \"OK\"}".to_string());
+}
+
+#[put("/playlists")]
+fn create_playlist() -> content::Json<String> {
+    return content::Json("{}".to_string());
+}
+
+#[get("/playlists/<id>")]
+fn playlist_by_id(id: String) -> content::Json<String> {
+    return match playlists::playlist_by_id(&id) {
+        Ok(playlist) => {
+            content::Json(serde_json::to_string(&playlist).unwrap())
+        },
+        Err(e) => {
+            println!("An error occured getting the playlist: {:?}", e);
+            return content::Json("{}".to_string());
+        }
+    }
+}
+
+#[get("/playlists")]
+fn get_playlists() -> content::Json<String> {
+    return content::Json(serde_json::to_string(&playlists::get_playlists()).unwrap())
+}
 
 #[get("/cuesheets/<id>")]
 fn cuesheet_by_id(id: String) -> Option<content::Html<String>> {
@@ -80,7 +119,7 @@ fn static_files(file: PathBuf) -> Option<NamedFile> {
 
 fn rocket() -> rocket::Rocket {
     rocket::ignite().mount("/", routes![index, static_files, search_cuesheets,
-        cuesheet_by_id, favicon])
+        cuesheet_by_id, favicon, get_playlists, playlist_by_id, create_playlist])
 }
 
 fn main() {

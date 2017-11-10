@@ -26,7 +26,6 @@ class App extends Component {
 		        </div>
 
 				<div className="App">
-					<h2>Cuesheet search</h2>
 		            <Route exact path="/" component={Search} />
 		            <Route path="/playlists" component={PlaylistManager} />
 		        </div>
