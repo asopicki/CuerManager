@@ -1,5 +1,8 @@
 import React, { Component } from 'react';
-import _ from 'lodash';
+import { connect } from 'react-redux';
+import {cuesheetSearch} from './actions/search';
+
+import CUESHEETS_API_PREFIX from './constants/api'
 
 function SearchButton(props) {
 
@@ -12,7 +15,7 @@ function SearchButton(props) {
 
 function SearchRow(props) {
 
-    let url = '/cuesheets/' + props.cuesheetId;
+    let url = CUESHEETS_API_PREFIX + props.cuesheetId; //TODO: Move url prefix to state or constant
 
     return  (
         <tr>
@@ -28,7 +31,9 @@ function SearchRow(props) {
 
 function SearchResult(props) {
 
-    const listRows = props.searchResult.map(result => {
+	let searchResult = props.searchResult || [];
+
+    const listRows = searchResult.map(result => {
         let score = result.score.toFixed(2);
 
         return (<SearchRow cuesheetId={result.id} title={result.title} rhythm={result.rhythm} phase={result.phase}
@@ -60,56 +65,34 @@ class SearchForm extends Component {
     constructor(props) {
         super(props);
 
-        this.state = {
-            searchQuery: ''
-        };
-
-        this.handleChange = this.handleChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
-    }
-
-    handleChange(event) {
-        this.setState({searchQuery: event.target.value});
     }
 
     handleSubmit(event) {
         event.preventDefault();
 
-        if (this.state.searchQuery) {
-            this.props.submitHandler(this.state.searchQuery);
+        let search_query = document.getElementById('cuesheet_search').value;
+
+		if ( search_query ) {
+            this.props.submitHandler(search_query);
         }
     }
 
     render() {
         return (<form onSubmit={this.handleSubmit}>
             <label for="search">Search:</label>
-            <input type="text" id="search" name="search" placeholder="Enter search query"
-                value={this.props.searchQuery} onChange={this.handleChange}/>
+            <input type="text" id="cuesheet_search" name="search" placeholder="Enter search query"
+                value={this.props.searchQuery} />
 
             <button type="submit">Search</button>
         </form>);
     }
 }
 
-class Search extends Component {
-    constructor() {
-        super();
-        this.state = {
-            searchResult: []
-        }
-    }
+class SearchContainer extends Component {
 
     handleSearch(query) {
-        let self = this
-        let request = new Request('/search/' + query);
-
-        fetch(request).then(function (response) {
-            return response.json()
-        }).then((result) => {
-            self.setState({
-                searchResult: _.orderBy(result, ['score', 'phase', 'title'], ['desc', 'asc', 'asc'])
-            })
-        });
+        this.props.searchCuesheet(query);
     }
 
     handleSearchByPhase(phase) {
@@ -171,10 +154,26 @@ class Search extends Component {
 		                </div>
 		            </div>
 		        </div>
-		        <SearchResult searchResult={this.state.searchResult} />
+		        <SearchResult searchResult={this.props.searchResult} />
 			</div>
         );
     }
 }
+
+const mapStateToProps = state => {
+	return {
+		searchResult: state.cuesheetSearch.searchResult,
+	}
+}
+
+const mapDispatchToProps = dispatch => {
+	return {
+		searchCuesheet: query => {
+			dispatch(cuesheetSearch(query))
+		}
+	}
+}
+
+const Search = connect(mapStateToProps, mapDispatchToProps)(SearchContainer)
 
 export default Search;

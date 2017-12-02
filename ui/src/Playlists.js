@@ -4,7 +4,7 @@ import {
   Link,
   withRouter
 } from 'react-router-dom'
-import _ from 'lodash';
+//import _ from 'lodash';
 
 class Playlist extends Component {
 
@@ -104,16 +104,16 @@ function PlaylistResult(props) {
 };
 
 class PlaylistSearch extends Component {
-	constructor() {
-            super();
+	constructor(props) {
+            super(props);
             this.state = {
-                playlistResult: [],
+                playlistResult: props.playlistResult,
                 refresh: true
             }
     }
 
     fetchPlaylists() {
-        let self = this
+        /*let self = this
         let request = new Request('/playlists');
 
         fetch(request).then(function (response) {
@@ -123,7 +123,8 @@ class PlaylistSearch extends Component {
                 playlistResult: _.orderBy(result, ['name'], ['asc']),
                 refresh: false
             })
-        });
+        });*/
+        //TODO: Dispatch action FETCH_PLAYLIST
     }
 
 	render() {

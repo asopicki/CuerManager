@@ -9,7 +9,6 @@ import PlaylistManager from './Playlists.js';
 import './App.css';
 
 
-
 class App extends Component {
 
 	render() {
