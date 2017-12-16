@@ -1,5 +1,5 @@
 import * as constants from '../constants/ActionTypes';
-import _ from 'lodash'
+
 
 export default store => next => action => {
 	switch(action.type) {
@@ -16,7 +16,7 @@ export default store => next => action => {
 					return fetch(request).then(
                         response => response.json().then(data => {
                             return next(responseAction({
-                                searchResult: _.orderBy(data, ['score', 'phase', 'title'], ['desc', 'asc', 'asc']),
+                                searchResult: data,
                                 type: action.payload.success
                             }))
                         }, () => {

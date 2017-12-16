@@ -37,7 +37,7 @@ function SearchResult(props) {
         let score = result.score.toFixed(2);
 
         return (<SearchRow cuesheetId={result.id} title={result.title} rhythm={result.rhythm} phase={result.phase}
-            score={score} plusfigures={result.plusfigures} />)
+            score={score} plusfigures={result.plusfigures} key={result.id}/>)
     });
 
     return (
@@ -80,7 +80,7 @@ class SearchForm extends Component {
 
     render() {
         return (<form onSubmit={this.handleSubmit}>
-            <label for="search">Search:</label>
+            <label htmlFor="cuesheet_search">Search:</label>
             <input type="text" id="cuesheet_search" name="search" placeholder="Enter search query"
                 value={this.props.searchQuery} />
 
@@ -110,7 +110,7 @@ class SearchContainer extends Component {
             let name = 'Phase '+phase;
             let alt = 'Quick search for Phase ' + phase + ' cuesheets';
 
-            return (<SearchButton name={name} alt={alt}
+            return (<SearchButton name={name} alt={alt} key={name}
                         onClick={() => this.handleSearchByPhase(phase)} />)
         });
 
@@ -118,7 +118,7 @@ class SearchContainer extends Component {
             let name = rhythm;
             let alt = 'Quick search for cuesheets for the rhythm '+ rhythm;
 
-            return (<SearchButton name={name} alt={alt}
+            return (<SearchButton name={name} alt={alt} key={name}
                         onClick={() => this.handleSearchByRhythm(rhythm)} />)
         });
 
@@ -127,7 +127,7 @@ class SearchContainer extends Component {
             let name = rhythm;
                     let alt = 'Quick search for cuesheets for the rhythm '+ rhythm;
 
-            return (<SearchButton name={name} alt={alt}
+            return (<SearchButton name={name} alt={alt} key={name}
                         onClick={() => this.handleSearchByRhythm(rhythm)} />)
         });
 
@@ -136,7 +136,7 @@ class SearchContainer extends Component {
             let name = rhythm;
             let alt = 'Quick search for cuesheets for the rhythm '+ rhythm;
 
-            return (<SearchButton name={name} alt={alt}
+            return (<SearchButton name={name} alt={alt} key={name}
                         onClick={() => this.handleSearchByRhythm(rhythm)} />)
         });
 

@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import {playlistSearch} from './actions/playlists';
 import {
   Route,
   Link,
@@ -8,48 +10,21 @@ import {
 
 class Playlist extends Component {
 
-	constructor() {
-		super();
-
-		this.state = {
-			playlist: {
-				name: "",
-				cuesheets: [],
-				id: ""
-			},
-		}
-	}
-
-	fetchPlaylist(id) {
-		let self = this
-        let request = new Request('/playlists/' +id);
-
-        fetch(request).then(function (response) {
-            return response.json()
-        }).then((result) => {
-
-            const playlist = result;
-
-            self.setState({
-                playlist: playlist,
-                id: id
-            });
-        });
+	findPlaylist(id) {
+        return this.props.playlists.find(element => element.id === id);
 	}
 
 	render() {
-		if (this.state.id !== this.props.match.params.id) {
-			this.fetchPlaylist(this.props.match.params.id);
-		}
+		const playlist = this.findPlaylist(this.props.match.params.id)
 
-		const cuesheetList = this.state.playlist.cuesheets.map(cuesheet => {
+		const cuesheetList = playlist.cuesheets.map(cuesheet => {
 			let url = "/cuesheets/"+cuesheet.id;
 			return (<li><a href={url} target="_blank">{cuesheet.title}</a></li>);
 		});
 
 		return (
 			<div>
-				<h2>Playlist - {this.state.playlist.name}</h2>
+				<h2>Playlist - {playlist.name}</h2>
 
 				<h3>Cuesheet list</h3>
 
@@ -61,7 +36,19 @@ class Playlist extends Component {
 	}
 }
 
-const PlaylistWithRouter = withRouter(Playlist);
+const mapStateToPlaylistProps = state => {
+	return {
+		playlists: state.playlists.playlistsResult
+	}
+}
+
+const mapDispatchToPlaylistProps = dispatch => {
+	return {
+
+	}
+}
+
+const PlaylistWithRouter = withRouter(connect(mapStateToPlaylistProps, mapDispatchToPlaylistProps)(Playlist));
 
 
 function PlaylistRow(props) {
@@ -79,9 +66,8 @@ function PlaylistRow(props) {
 };
 
 function PlaylistResult(props) {
-
     const listRows = props.searchResult.map(result => {
-        return (<PlaylistRow playlistId={result.id} name={result.name} />)
+        return (<PlaylistRow playlistId={result.id} name={result.name} key={result.id} />)
     });
 
     return (
@@ -103,14 +89,7 @@ function PlaylistResult(props) {
     );
 };
 
-class PlaylistSearch extends Component {
-	constructor(props) {
-            super(props);
-            this.state = {
-                playlistResult: props.playlistResult,
-                refresh: true
-            }
-    }
+class PlaylistContainer extends Component {
 
     fetchPlaylists() {
         /*let self = this
@@ -125,16 +104,17 @@ class PlaylistSearch extends Component {
             })
         });*/
         //TODO: Dispatch action FETCH_PLAYLIST
+        this.props.fetchPlaylists();
     }
 
 	render() {
-		if (this.state.refresh) {
+		if (this.props.refresh) {
 			this.fetchPlaylists();
 		}
 
 		return (
                         <div>
-                            <PlaylistResult searchResult={this.state.playlistResult} />
+                            <PlaylistResult searchResult={this.props.searchResult} />
                         </div>
         	);
 	}
@@ -150,5 +130,23 @@ function PlaylistManager(props) {
         </div>
     );
 }
+
+
+const mapStateToProps = state => {
+	return {
+		searchResult: state.playlists.playlistsResult,
+		refresh: state.playlists.refresh
+	}
+}
+
+const mapDispatchToProps = dispatch => {
+	return {
+		fetchPlaylists: () => {
+        			dispatch(playlistSearch())
+        }
+	}
+}
+
+const PlaylistSearch = connect(mapStateToProps, mapDispatchToProps)(PlaylistContainer)
 
 export default PlaylistManager;
