@@ -1,4 +1,3 @@
-use rs_es::Client;
 use rs_es::query::Query;
 use rs_es::query::full_text;
 use rs_es::operations::get::GetResult;
@@ -12,13 +11,9 @@ use comrak::{markdown_to_html, ComrakOptions};
 use std::boxed::Box;
 use std::ops::Deref;
 
+use elastic::{CUESHEET_INDEX, CUESHEET_TYPE, BackendError, get_client};
+
 const MAX_RESULTS: u64 = 200;
-
-const DEFAULT_URL: &'static str = "http://localhost:9200";
-
-const CUESHEET_INDEX: &'static str = "cuesheets";
-
-const CUESHEET_TYPE: &'static str = "cuesheet";
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CuesheetMetaData {
@@ -98,15 +93,11 @@ pub fn get_cuesheet(id: &str) -> Result<Box<String>, DocumentsError> {
         }
     };
 
-    //println!("Result: {:?}", result);
-
     let source = result.source.unwrap();
     let content = unescape(source["content"].as_str().unwrap()).unwrap();
     let markdown = markdown_to_html(content.as_str(), &ComrakOptions::default());
 
     return Ok(Box::new(markdown));
-
-    //return Err(DocumentsError::SearchError)
 }
 
 pub fn get_cuesheets(query: &str) -> Result<Vec<CuesheetMetaData>, DocumentsError> {
@@ -181,22 +172,5 @@ fn build_match_query(term: &str, query: &str) -> Query {
 fn build_default_query(query: &str) -> Query {
     Query::build_match("content", query).with_type(full_text::MatchType::PhrasePrefix)
         .with_slop(10).build()
-
-//    Query::build_bool()
-//        .with_must(Query::build_match("content", query).with_boost(0.5).build())
-//        .with_should(vec![
-//            Query::build_wildcard("title", query).build(),
-//            Query::build_wildcard("rhythm", query).build()
-//        ]).build()
-}
-
-fn get_client() -> Result<Client, DocumentsError> {
-    return match Client::new(DEFAULT_URL) {
-        Ok(client) => Ok(client),
-        Err(e) => {
-            println!("An error occured connection to Elasticsearch: {:?}", e);
-            return Err(DocumentsError::SearchError);
-        }
-    };
 }
 

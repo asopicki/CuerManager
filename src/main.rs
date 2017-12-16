@@ -19,6 +19,7 @@ mod tests;
 mod documents;
 mod playlists;
 mod routes;
+mod elastic;
 
 fn rocket() -> rocket::Rocket {
     rocket::ignite().mount("/", routes![

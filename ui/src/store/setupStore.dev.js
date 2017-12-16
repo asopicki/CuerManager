@@ -6,7 +6,7 @@ import rootReducer from '../reducers';
 const setupStore = preloadedState => {
 	const store = createStore(
 		rootReducer,
-		preloadedState,
+		Object.assign({}, preloadedState, {cuesheetSearch: { serverPort: 8087}}),
 		applyMiddleware(api)
 	)
 

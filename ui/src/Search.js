@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import { Link } from 'react-router-dom'
 import {cuesheetSearch} from './actions/search';
 
-import CUESHEETS_API_PREFIX from './constants/api'
+import {CUESHEETS_API_PREFIX} from './constants/api'
 
 function SearchButton(props) {
 
@@ -15,7 +16,7 @@ function SearchButton(props) {
 
 function SearchRow(props) {
 
-    let url = CUESHEETS_API_PREFIX + props.cuesheetId; //TODO: Move url prefix to state or constant
+    let url = "http://localhost:" + props.serverPort + CUESHEETS_API_PREFIX + "/" + props.cuesheetId; //TODO: Move url prefix to state or constant
 
     return  (
         <tr>
@@ -37,7 +38,7 @@ function SearchResult(props) {
         let score = result.score.toFixed(2);
 
         return (<SearchRow cuesheetId={result.id} title={result.title} rhythm={result.rhythm} phase={result.phase}
-            score={score} plusfigures={result.plusfigures} key={result.id}/>)
+            score={score} plusfigures={result.plusfigures} key={result.id} serverPort={props.serverPort} />)
     });
 
     return (
@@ -154,7 +155,7 @@ class SearchContainer extends Component {
 		                </div>
 		            </div>
 		        </div>
-		        <SearchResult searchResult={this.props.searchResult} />
+		        <SearchResult searchResult={this.props.searchResult} serverPort={this.props.serverPort}/>
 			</div>
         );
     }
@@ -163,6 +164,7 @@ class SearchContainer extends Component {
 const mapStateToProps = state => {
 	return {
 		searchResult: state.cuesheetSearch.searchResult,
+		serverPort: state.cuesheetSearch.serverPort
 	}
 }
 

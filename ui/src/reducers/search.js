@@ -9,7 +9,7 @@ const cuesheetSearchReducer = (state= {}, action) => {
 
 	switch(action.type) {
 		case constants.CUESHEET_RESULT: {
-			return Object.assign({}, state, {searchResult: _.orderBy(action.searchResult, ['score', 'phase', 'title'], ['desc', 'asc', 'asc'])})
+			return Object.assign({}, state, {searchResult: _.orderBy(action.payload.searchResult, ['score', 'phase', 'title'], ['desc', 'asc', 'asc'])})
 		}
 		default:
 			return state;

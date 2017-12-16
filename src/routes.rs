@@ -6,6 +6,7 @@ use std::io;
 use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 
+use rocket_contrib::Json;
 use rocket::response::{content, NamedFile};
 
 #[delete("/playlists/<id>/song/<song_id>")]
@@ -23,9 +24,17 @@ fn delete_playlist(id: String) -> content::Json<String> {
 	return content::Json("{result: \"OK\"}".to_string());
 }
 
-#[put("/playlists")]
-fn create_playlist() -> content::Json<String> {
-	return content::Json("{}".to_string());
+#[put("/playlists", format="application/json", data="<playlist>")]
+fn create_playlist(playlist: Json<playlists::Playlist>) -> content::Json<String> {
+	match playlists::create_playlist(playlist.into_inner()) {
+		Ok(playlist) => {
+			content::Json(serde_json::to_string(&playlist).unwrap())
+		}
+		Err(e) => {
+			println!("An error occured creating the playlist: {:?}", e);
+			return content::Json("{}".to_string());
+		}
+	}
 }
 
 #[get("/playlists/<id>")]
@@ -43,7 +52,16 @@ fn playlist_by_id(id: String) -> content::Json<String> {
 
 #[get("/playlists")]
 fn get_playlists() -> content::Json<String> {
-	return content::Json(serde_json::to_string(&playlists::get_playlists()).unwrap())
+	return match playlists::get_playlists() {
+		Ok(playlists) => {
+			content::Json(serde_json::to_string(&playlists).unwrap())
+		},
+		Err(e) => {
+			println!("An error occured getting the playlist: {:?}", e);
+			return content::Json("[]".to_string());
+		}
+	}
+
 }
 
 #[get("/cuesheets/<id>")]
