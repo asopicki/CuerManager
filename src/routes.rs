@@ -36,8 +36,13 @@ fn add_cuesheet_to_playlist(id: String, cuesheet_id: String) -> Result<content::
 
 #[delete("/playlists/<id>")]
 fn delete_playlist(id: String) -> Result<content::Json<String>, Status> {
-	return match playlists::delete_playlist(&id) {
-		Ok(_) => Ok(content::Json("{result: \"OK\", id: \"" + id + "\"}".to_string())),
+	match playlists::delete_playlist(&id) {
+		Ok(_) => {
+			let mut json = "{result: \"OK\", id: \"".to_owned();
+			json.push_str(&id);
+			json.push_str(&"\"}".to_owned());
+			return Ok(content::Json(json.to_string()))
+		},
 		Err(e) => {
 			println!("An error occured adding the cuesheet to playlist: {:?}", e);
 			return Err(Status::NotFound);
