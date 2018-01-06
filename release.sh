@@ -1,6 +1,13 @@
 #!/bin/bash
 
-VERSION="0.5.0"
+VERSION=${1:-}
+
+if [ -z ${VERSION} ]; then
+  echo "Missing version for release";
+  exit 1;
+fi
+
+git checkout v${VERSION}
 
 cd ui
 echo "Building web frontend ..."
@@ -11,7 +18,7 @@ cd ../
 rsync -av ui/build/static/ public/
 cp ui/build/* public/
 
-echo "Starting application..."
+echo "Building application..."
 cargo build --release
 
 cp -r public target/release/
