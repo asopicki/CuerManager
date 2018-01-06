@@ -1,38 +1,87 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import {playlistSearch, createPlaylist, createPlaylistName } from './actions/playlists';
+import {playlistSearch, createPlaylist, createPlaylistName, removePlaylist, removeCuesheet } from './actions/playlists';
 import {
   Route,
   Link,
   withRouter
 } from 'react-router-dom'
-//import _ from 'lodash';
+
+class CuesheetRow extends Component {
+
+	constructor(props) {
+		super(props);
+
+		this.removeCuesheet = this.removeCuesheet.bind(this);
+	}
+
+	removeCuesheet() {
+		this.props.removeHandler(this.props.cuesheet.id);
+	}
+
+	render() {
+		let cuesheet = this.props.cuesheet;
+
+		return (
+			<tr>
+	            <td><a href={this.props.url} target="_blank">{cuesheet.title}</a></td>
+	            <td className="textcenter" onClick={this.removeCuesheet}>Remove</td>
+	        </tr>
+		);
+	}
+}
 
 class Playlist extends Component {
+	playlist: null
+
+	constructor(props) {
+		super(props);
+
+		this.removeCuesheet = this.removeCuesheet.bind(this);
+	}
 
 	findPlaylist(id) {
         return this.props.playlists.find(element => element.id === id);
 	}
 
+	removeCuesheet(cuesheet_id) {
+		this.playlist.cuesheets = this.playlist.cuesheets.filter((element) => {
+			return element.id !== cuesheet_id;
+		})
+
+		return this.props.removeCuesheet(this.playlist.id, cuesheet_id)
+	}
+
 	render() {
-		const playlist = this.findPlaylist(this.props.match.params.id)
+		this.playlist = this.findPlaylist(this.props.match.params.id)
 
-		if (playlist) {
+		if (this.playlist) {
 
-			const cuesheetList = playlist.cuesheets.map(cuesheet => {
+			const cuesheetList = this.playlist.cuesheets.map(cuesheet => {
 				let url = "http://localhost:"+this.props.serverPort+"/cuesheets/"+cuesheet.id;
-				return (<li key={cuesheet.id}><a href={url} target="_blank">{cuesheet.title}</a></li>);
+				return (
+					<CuesheetRow key={cuesheet.id} cuesheet={cuesheet} removeHandler={this.removeCuesheet}
+						url={url}/>
+				);
 			});
 
 			return (
-				<div>
-					<h2>Playlist - {playlist.name}</h2>
+				<div className="resultList">
+					<h2>Playlist - {this.playlist.name}</h2>
 
 					<h3>Cuesheet list</h3>
 
-					<ul>
-						{cuesheetList}
-					</ul>
+					<table className="textleft">
+						<thead>
+							<tr>
+								<td>Name</td>
+								<td>Actions</td>
+							</tr>
+						</thead>
+						<tbody>
+							{cuesheetList}
+						</tbody>
+					</table>
 				</div>
 			);
 		} else {
@@ -54,26 +103,41 @@ const mapStateToPlaylistProps = state => {
 
 const mapDispatchToPlaylistProps = dispatch => {
 	return {
-
+		removeCuesheet: (id, cuesheet_id) => {
+            dispatch(removeCuesheet(id, cuesheet_id))
+        }
 	}
 }
 
 const PlaylistWithRouter = withRouter(connect(mapStateToPlaylistProps, mapDispatchToPlaylistProps)(Playlist));
 
 
-function PlaylistRow(props) {
+class PlaylistRow extends Component {
 
-    let url = '/playlists/' + props.playlistId;
+	constructor(props) {
+		super(props)
 
-    return  (
-        <tr key={props.playlistId}>
-           <td><Link to={url} >{props.name}</Link></td>
-           <td className="textcenter">n/a</td>
-           <td className="textcenter">TODO</td>
-        </tr>
-    );
+		this.removePlaylist = this.removePlaylist.bind(this);
+	}
 
-};
+	removePlaylist() {
+		this.props.removeHandler(this.props.playlistId)
+	}
+
+	render() {
+
+	    let url = '/playlists/' + this.props.playlistId;
+
+	    return  (
+	        <tr key={this.props.playlistId}>
+	           <td><Link to={url} >{this.props.name}</Link></td>
+	           <td className="textcenter">n/a</td>
+	           <td className="textcenter" onClick={this.removePlaylist}>remove</td>
+	        </tr>
+	    );
+
+	}
+}
 
 class PlaylistContainer extends Component {
 
@@ -83,6 +147,7 @@ class PlaylistContainer extends Component {
         this.createPlaylist = this.createPlaylist.bind(this);
         this.createPlaylistName = this.createPlaylistName.bind(this);
         this.fetchPlaylists = this.fetchPlaylists.bind(this);
+        this.removePlaylist = this.removePlaylist.bind(this);
     }
 
 	createPlaylistName(event) {
@@ -99,14 +164,18 @@ class PlaylistContainer extends Component {
         this.props.fetchPlaylists();
     }
 
+    removePlaylist(id) {
+        this.props.removePlaylist(id);
+    }
+
 	render() {
 		if (this.props.refresh) {
-			console.log("Refreshing:", this.props.refresh);
 			this.fetchPlaylists();
 		}
 
 		const listRows = this.props.searchResult.map((result, index) => {
-                return (<PlaylistRow key={index} playlistId={result.id} name={result.name} />)
+                return (<PlaylistRow key={index} playlistId={result.id} name={result.name}
+                    removeHandler={this.removePlaylist}/>)
         });
 
 		return (
@@ -169,6 +238,9 @@ const mapDispatchToProps = dispatch => {
         },
         createPlaylistName: (name) => {
             dispatch(createPlaylistName(name))
+        },
+        removePlaylist: (id) => {
+            dispatch(removePlaylist(id))
         }
 	}
 }

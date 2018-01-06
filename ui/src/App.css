@@ -170,3 +170,18 @@ button:hover {
   grid-gap: 2px;
   grid-auto-rows: minmax(30px, 50px);
 }
+
+.modalDialog {
+    position: relative;
+    top: 40px;
+    left: 40px;
+    right: 40px;
+    bottom: 40px;
+    border: 1px solid rgb(204, 204, 204);
+    background: rgb(255, 255, 255) none repeat scroll 0% 0%;
+    overflow: auto;
+    border-radius: 4px;
+    outline: medium none currentcolor;
+    padding: 20px;
+
+}

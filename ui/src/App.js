@@ -7,7 +7,9 @@ import {
 import Search from './Search.js';
 import PlaylistManager from './Playlists.js';
 import './App.css';
+import Modal from 'react-modal';
 
+Modal.setAppElement('#root')
 
 class App extends Component {
 

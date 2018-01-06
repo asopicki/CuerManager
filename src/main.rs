@@ -30,7 +30,10 @@ fn rocket() -> rocket::Rocket {
         routes::favicon,
         routes::get_playlists,
         routes::playlist_by_id,
-        routes::create_playlist])
+        routes::create_playlist,
+        routes::add_cuesheet_to_playlist,
+        routes::delete_playlist,
+        routes::remove_cuesheet_from_playlist],)
 }
 
 fn main() {

@@ -21,7 +21,7 @@ export default store => next => action => {
                         response => response.json().then(data => {
                             return next(responseAction({
                                 payload: {
-                                    searchResult: data,
+                                    result: data,
                                 },
                                 type: action.payload.success
                             }))
@@ -29,7 +29,7 @@ export default store => next => action => {
                             let resultAction = responseAction({
                                 error: true
                             });
-                            action.payload.error = new Error('Search return an error on data extraction!');
+                            action.payload.error = new Error('GET request failed!');
                             next(resultAction);
                         }),
                         error => {
@@ -42,34 +42,34 @@ export default store => next => action => {
                         }
                     );
 				}
-				case 'PUT': {
-					request.headers.append('Content-Type', 'application/json');
-					return fetch(request).then(
-						response => response.json().then(data => {
-							console.log(data);
-							return next(responseAction({
+				case 'PUT':
+				case 'DELETE': {
+                    request.headers.append('Content-Type', 'application/json');
+                    return fetch(request).then(
+                        response => response.json().then(data => {
+                            return next(responseAction({
                                 payload: {
-                                    playlist: data,
+                                    result: data,
                                 },
                                 type: action.payload.success
                             }))
-						}, () => {
-							let resultAction = responseAction({
+                        }, () => {
+                            let resultAction = responseAction({
                                 error: true
                             });
-                            action.payload.error = new Error('Creating playlist failed!');
+                            action.payload.error = new Error('PUT request failed!');
                             next(resultAction);
-						}),
-						error => {
-							let resultAction = responseAction({
+                        }),
+                        error => {
+                            let resultAction = responseAction({
                                 payload: Object.assign({}, action.payload, {error: error}),
                                 error: true
                             });
 
                             next(resultAction)
-						}
-					);
-				}
+                        }
+                    );
+                }
 				default: {
 				}
 			}

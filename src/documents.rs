@@ -11,7 +11,7 @@ use comrak::{markdown_to_html, ComrakOptions};
 use std::boxed::Box;
 use std::ops::Deref;
 
-use elastic::{CUESHEET_INDEX, CUESHEET_TYPE, BackendError, get_client};
+use elastic::{CUESHEET_INDEX, CUESHEET_TYPE, get_client};
 
 const MAX_RESULTS: u64 = 200;
 
@@ -61,6 +61,14 @@ impl CuesheetMetaData {
             _ => None,
         }
     }
+
+	pub fn id(&self) -> &String {
+		&self.id
+	}
+
+	pub fn title(&self) -> &String {
+		&self.title
+	}
 }
 
 #[derive(Debug)]
@@ -75,29 +83,54 @@ pub enum SearchType {
     StringSearch
 }
 
-pub fn get_cuesheet(id: &str) -> Result<Box<String>, DocumentsError> {
-    let mut client = get_client().unwrap();
+pub fn get_cuesheet_content(id: &str) -> Result<Box<String>, DocumentsError> {
+	let result = get_cuesheet_document(id);
 
-    let result: GetResult<Value> = match client
-        .get(CUESHEET_INDEX, id)
-        .with_doc_type(CUESHEET_TYPE)
-        .send() {
-        Ok(t) => t,
-        Err(e) => {
-            println!(
-                "An error occured fetching document with id {:?}: {:?}",
-                id,
-                e
-            );
-            return Err(DocumentsError::SearchError);
-        }
-    };
+	match result {
+		Ok(r) => {
+			let source = r.source.unwrap();
+			let content = unescape(source["content"].as_str().unwrap()).unwrap();
+			let markdown = markdown_to_html(content.as_str(), &ComrakOptions::default());
 
-    let source = result.source.unwrap();
-    let content = unescape(source["content"].as_str().unwrap()).unwrap();
-    let markdown = markdown_to_html(content.as_str(), &ComrakOptions::default());
+			return Ok(Box::new(markdown));
+		}
+		Err(e) => Err(e)
+	}
+}
 
-    return Ok(Box::new(markdown));
+fn get_cuesheet_document(id: &str) -> Result<GetResult<Value>, DocumentsError> {
+	let mut client = get_client().unwrap();
+	let result: GetResult<Value> = match client
+		.get(CUESHEET_INDEX, id)
+		.with_doc_type(CUESHEET_TYPE)
+		.send() {
+		Ok(t) => t,
+		Err(e) => {
+			println!(
+				"An error occured fetching document with id {:?}: {:?}",
+				id,
+				e
+			);
+			return Err(DocumentsError::SearchError);
+		}
+	};
+	Ok(result)
+}
+
+pub fn get_cuesheet(id: &str) -> Result<CuesheetMetaData, DocumentsError> {
+	let result = get_cuesheet_document(id);
+
+	match result  {
+		Ok(value) => {
+			let source = Box::new(value.source.unwrap());
+
+			match CuesheetMetaData::from(&Some(source), value.id, Some(1.0))  {
+				Some(obj) => Ok(obj),
+				_ => Err(DocumentsError::SearchError)
+			}
+		}
+		Err(e) => Err(e)
+	}
 }
 
 pub fn get_cuesheets(query: &str) -> Result<Vec<CuesheetMetaData>, DocumentsError> {

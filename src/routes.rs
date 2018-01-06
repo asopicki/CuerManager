@@ -8,31 +8,52 @@ use std::path::{Path, PathBuf};
 
 use rocket_contrib::Json;
 use rocket::response::{content, NamedFile};
+use rocket::http::Status;
 
-#[delete("/playlists/<id>/song/<song_id>")]
-fn remove_song_from_playlist(id: String, song_id: String) -> content::Json<String> {
-	return content::Json("{}".to_string());
+#[delete("/playlists/<id>/cuesheet/<cuesheet_id>")]
+fn remove_cuesheet_from_playlist(id: String, cuesheet_id: String) -> Result<content::Json<String>, Status> {
+	return match playlists::remove_cuesheet_from_playlist(&id, &cuesheet_id) {
+		Ok(playlist) => Ok(content::Json(serde_json::to_string(&playlist).unwrap())),
+		Err(e) => {
+			println!("An error occured adding the cuesheet to playlist: {:?}", e);
+			return Err(Status::BadRequest);
+		}
+	}
 }
 
-#[put("/playlists/<id>/song/<song_id>")]
-fn add_song_to_playlist(id: String, song_id: String) -> content::Json<String> {
-	return content::Json("{}".to_string());
+#[put("/playlists/<id>/cuesheet/<cuesheet_id>")]
+fn add_cuesheet_to_playlist(id: String, cuesheet_id: String) -> Result<content::Json<String>, Status> {
+	return match playlists::add_cuesheet_to_playlist(&id, &cuesheet_id) {
+		Ok(playlist) => {
+			Ok(content::Json(serde_json::to_string(&playlist).unwrap()))
+		},
+		Err(e) => {
+			println!("An error occured adding the cuesheet to playlist: {:?}", e);
+			return Err(Status::BadRequest);
+		}
+	}
 }
 
 #[delete("/playlists/<id>")]
-fn delete_playlist(id: String) -> content::Json<String> {
-	return content::Json("{result: \"OK\"}".to_string());
+fn delete_playlist(id: String) -> Result<content::Json<String>, Status> {
+	return match playlists::delete_playlist(&id) {
+		Ok(_) => Ok(content::Json("{result: \"OK\", id: \"" + id + "\"}".to_string())),
+		Err(e) => {
+			println!("An error occured adding the cuesheet to playlist: {:?}", e);
+			return Err(Status::NotFound);
+		}
+	}
 }
 
 #[put("/playlists", format="application/json", data="<playlist>")]
-fn create_playlist(playlist: Json<playlists::Playlist>) -> content::Json<String> {
+fn create_playlist(playlist: Json<playlists::Playlist>) -> Result<content::Json<String>, Status> {
 	match playlists::create_playlist(playlist.into_inner()) {
 		Ok(playlist) => {
-			content::Json(serde_json::to_string(&playlist).unwrap())
+			Ok(content::Json(serde_json::to_string(&playlist).unwrap()))
 		}
 		Err(e) => {
 			println!("An error occured creating the playlist: {:?}", e);
-			return content::Json("{}".to_string());
+			return Err(Status::BadRequest);
 		}
 	}
 }
@@ -66,7 +87,7 @@ fn get_playlists() -> content::Json<String> {
 
 #[get("/cuesheets/<id>")]
 fn cuesheet_by_id(id: String) -> Option<content::Html<String>> {
-	return match documents::get_cuesheet(&id) {
+	return match documents::get_cuesheet_content(&id) {
 		Ok(cuesheet) => {
 			let html = content::Html(*cuesheet);
 			Some(html)

@@ -8,7 +8,7 @@ export const playlistSearch = (error=undefined) => ({
 		method: 'GET',
 		error: error
 	},
-	error: error,
+	error: error===undefined,
 	meta: {
 		origin: 'playlists.search'
 	}
@@ -30,9 +30,43 @@ export const createPlaylist = (name, error=undefined) => ({
             'Content-Type': 'application/json'
         }
     },
-    error: error,
+    error: error===undefined,
     meta: {
         origin: 'playlists.search'
+    }
+})
+
+export const removePlaylist = (id, error=undefined) => ({
+	type: types.API,
+	payload: {
+		success: types.PLAYLIST_REMOVED,
+		url: '/playlists/' + id,
+		method: 'DELETE',
+		error: error,
+		headers: {
+            'Content-Type': 'application/json'
+        }
+	},
+	error: error===undefined,
+    meta: {
+        origin: 'playlists.search'
+    }
+})
+
+export const removeCuesheet = (id, cuesheet_id, error=undefined) => ({
+	type: types.API,
+	payload: {
+        success: types.PLAYLIST_UPDATED,
+        url: '/playlists/' + id + '/cuesheet/' + cuesheet_id,
+        method: 'DELETE',
+        error: error,
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    },
+    error: error===undefined,
+    meta: {
+        origin: 'playlists.view'
     }
 })
 

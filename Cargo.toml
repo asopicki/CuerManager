@@ -5,8 +5,8 @@ authors = ["Alexander Sopicki"]
 
 [dependencies]
 
-rocket = "0.3.4"
-rocket_codegen = "0.3.4"
+rocket = "0.3.5"
+rocket_codegen = "0.3.5"
 rs-es = "0.10.0"
 json_str = "*"
 serde = "*"

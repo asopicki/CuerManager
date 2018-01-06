@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { Link } from 'react-router-dom'
-import {cuesheetSearch} from './actions/search';
+import Modal from 'react-modal';
+import {cuesheetSearch, addToListDialog, addToList, closeDialog} from './actions/search';
+import {playlistSearch} from './actions/playlists';
 
 import {CUESHEETS_API_PREFIX} from './constants/api'
 
@@ -14,21 +15,36 @@ function SearchButton(props) {
 
 };
 
-function SearchRow(props) {
+class SearchRow extends Component {
 
-    let url = "http://localhost:" + props.serverPort + CUESHEETS_API_PREFIX + "/" + props.cuesheetId; //TODO: Move url prefix to state or constant
+	constructor(props) {
+		super(props)
 
-    return  (
-        <tr>
-           <td><a href={url} target="_blank">{props.title}</a></td>
-           <td className="textcenter">{props.rhythm}</td>
-           <td className="textcenter">{props.phase} {props.plusfigures}</td>
-           <td className="textcenter">{props.score}</td>
-           <td className="textcenter">addToList</td>
-        </tr>
-    );
+		this.addToList = this.addToList.bind(this);
+	}
 
+	addToList() {
+		console.log("Adding to list:", this.props.cuesheetId);
+		this.props.addToListHandler(this.props.cuesheetId, this.props.title);
+	}
+
+    render() {
+        let url = "http://localhost:" + this.props.serverPort + CUESHEETS_API_PREFIX + "/" + this.props.cuesheetId; //TODO: Use template string
+
+
+	    return  (
+	        <tr>
+	           <td><a href={url} target="_blank">{this.props.title}</a></td>
+	           <td className="textcenter">{this.props.rhythm}</td>
+	           <td className="textcenter">{this.props.phase} {this.props.plusfigures}</td>
+	           <td className="textcenter">{this.props.score}</td>
+	           <td className="textcenter" onClick={this.addToList}>addToList</td>
+	        </tr>
+	    );
+	}
 };
+
+
 
 function SearchResult(props) {
 
@@ -38,7 +54,8 @@ function SearchResult(props) {
         let score = result.score.toFixed(2);
 
         return (<SearchRow cuesheetId={result.id} title={result.title} rhythm={result.rhythm} phase={result.phase}
-            score={score} plusfigures={result.plusfigures} key={result.id} serverPort={props.serverPort} />)
+            score={score} plusfigures={result.plusfigures} key={result.id} serverPort={props.serverPort}
+                addToListHandler={props.addToListHandler} />)
     });
 
     return (
@@ -90,7 +107,65 @@ class SearchForm extends Component {
     }
 }
 
+class AddToListContainer extends Component {
+	constructor(props) {
+		super(props);
+
+		this.closeDialog = this.closeDialog.bind(this);
+	}
+
+	closeDialog(event) {
+		let playlistId = document.getElementById('addTitle').value;
+        this.props.closeDialog(playlistId, this.props.addTitle.id);
+    }
+
+    render() {
+        let playlists = this.props.playlists || [];
+        let options = playlists.map((playlist) => {
+            return (
+                <option value={playlist.id} key={playlist.id} >{playlist.name}</option>
+            )
+        });
+
+        return (
+            <Modal isOpen={this.props.showDialog} onRequestClose={this.closeDialog}
+                contentLabel="Add title to playlist" className="modalDialog">
+                <h2>Add title {this.props.addTitle.title} to the selected Playlist</h2>
+                <select id="addTitle">
+                    <option value=""></option>
+					{options}
+                </select>
+                <button onClick={this.closeDialog}>Add to list</button>
+            </Modal>
+        )
+    }
+}
+
+
+const mapStateToAddToListProps = state => {
+	return {
+		showDialog: state.cuesheetSearch.showDialog,
+		addTitle: state.cuesheetSearch.addTitle,
+		playlists: state.playlists.playlistsResult,
+	}
+}
+
+const mapDispatchToAddToListProps = dispatch => {
+	return {
+		closeDialog: (id, titleId) => {
+			dispatch(closeDialog());
+
+			if (id) {
+				dispatch(addToList(id, titleId))
+			}
+		}
+	}
+}
+
+const AddToList = connect(mapStateToAddToListProps, mapDispatchToAddToListProps)(AddToListContainer)
+
 class SearchContainer extends Component {
+
 
     handleSearch(query) {
         this.props.searchCuesheet(query);
@@ -155,7 +230,10 @@ class SearchContainer extends Component {
 		                </div>
 		            </div>
 		        </div>
-		        <SearchResult searchResult={this.props.searchResult} serverPort={this.props.serverPort}/>
+		        <SearchResult searchResult={this.props.searchResult} serverPort={this.props.serverPort}
+		            addToListHandler={this.props.addToListDialog}/>
+
+		        <AddToList />
 			</div>
         );
     }
@@ -164,7 +242,9 @@ class SearchContainer extends Component {
 const mapStateToProps = state => {
 	return {
 		searchResult: state.cuesheetSearch.searchResult,
-		serverPort: state.cuesheetSearch.serverPort
+		serverPort: state.cuesheetSearch.serverPort,
+		showDialog: state.cuesheetSearch.showDialog,
+		addTitle: state.cuesheetSearch.addTitle
 	}
 }
 
@@ -172,6 +252,13 @@ const mapDispatchToProps = dispatch => {
 	return {
 		searchCuesheet: query => {
 			dispatch(cuesheetSearch(query))
+			dispatch(playlistSearch())
+		},
+		addToListDialog: (id, title) => {
+			dispatch(addToListDialog(id, title));
+		},
+		closeDialog: () => {
+			dispatch(closeDialog());
 		}
 	}
 }
