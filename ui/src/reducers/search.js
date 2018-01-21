@@ -15,7 +15,7 @@ const cuesheetSearchReducer = (state= {}, action) => {
 			return Object.assign({}, state, {showDialog: true, addTitle: {id: action.payload.id, title: action.payload.title}});
 		}
 		case constants.CUESHEET_RESULT: {
-			return Object.assign({}, state, {searchResult: _.orderBy(action.payload.result, ['score', 'phase', 'title'], ['desc', 'asc', 'asc'])})
+			return Object.assign({}, state, {searchResult: _.orderBy(action.payload.result, ['phase', 'title'], ['asc', 'asc'])})
 		}
 		default:
 			return state;

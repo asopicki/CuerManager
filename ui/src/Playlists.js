@@ -41,11 +41,11 @@ class Playlist extends Component {
 	}
 
 	findPlaylist(id) {
-        return this.props.playlists.find(element => element.id === id);
+        return this.props.playlists.find(element => element.uuid === id);
 	}
 
 	removeCuesheet(cuesheet_id) {
-		this.playlist.cuesheets = this.playlist.cuesheets.filter((element) => {
+		this.playlist.cuecards = this.playlist.cuecards.filter((element) => {
 			return element.id !== cuesheet_id;
 		})
 
@@ -57,7 +57,7 @@ class Playlist extends Component {
 
 		if (this.playlist) {
 
-			const cuesheetList = this.playlist.cuesheets.map(cuesheet => {
+			const cuesheetList = this.playlist.cuecards.map(cuesheet => {
 				let url = "http://localhost:"+this.props.serverPort+"/cuesheets/"+cuesheet.id;
 				return (
 					<CuesheetRow key={cuesheet.id} cuesheet={cuesheet} removeHandler={this.removeCuesheet}
@@ -174,7 +174,7 @@ class PlaylistContainer extends Component {
 		}
 
 		const listRows = this.props.searchResult.map((result, index) => {
-                return (<PlaylistRow key={index} playlistId={result.id} name={result.name}
+                return (<PlaylistRow key={result.id} playlistId={result.id} uuid={result.uuid}  name={result.name}
                     removeHandler={this.removePlaylist}/>)
         });
 
