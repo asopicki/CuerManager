@@ -4,7 +4,7 @@ export const playlistSearch = (error=undefined) => ({
 	type: types.API,
 	payload: {
 		success: types.PLAYLIST_RESULT,
-		url: '/playlists',
+		url: '/v2/playlists',
 		method: 'GET',
 		error: error
 	},
@@ -18,13 +18,11 @@ export const createPlaylist = (name, error=undefined) => ({
 	type: types.API,
     payload: {
         success: types.PLAYLIST_CREATED,
-        url: '/playlists',
+        url: '/v2/playlists',
         method: 'PUT',
         error: error,
         body: JSON.stringify({
-            id: "",
             name: name,
-            cuesheets: []
         }),
         headers: {
             'Content-Type': 'application/json'
@@ -40,7 +38,7 @@ export const removePlaylist = (id, error=undefined) => ({
 	type: types.API,
 	payload: {
 		success: types.PLAYLIST_REMOVED,
-		url: '/playlists/' + id,
+		url: '/v2/playlists/' + id,
 		method: 'DELETE',
 		error: error,
 		headers: {
@@ -57,7 +55,7 @@ export const removeCuesheet = (id, cuesheet_id, error=undefined) => ({
 	type: types.API,
 	payload: {
         success: types.PLAYLIST_UPDATED,
-        url: '/playlists/' + id + '/cuesheet/' + cuesheet_id,
+        url: '/v2/playlists/' + id + '/cuesheet/' + cuesheet_id,
         method: 'DELETE',
         error: error,
         headers: {

@@ -4,7 +4,7 @@ export const cuesheetSearch = (query, error=undefined) => ({
 	type: types.API,
 	payload: {
 		success: types.CUESHEET_RESULT,
-		url: '/search/' + query,
+		url: '/v2/search/' + query,
 		method: 'GET',
 		error: error
 	},
@@ -26,7 +26,7 @@ export const addToList = (id, titleid, error=undefined) => ({
 	type: types.API,
 	payload: {
 		success: types.PLAYLIST_UPDATED,
-		url: '/playlists/' + id + '/cuesheet/' + titleid,
+		url: '/v2//playlists/' + id + '/cuesheet/' + titleid,
 		id: id,
 		titleid: titleid,
 		method: 'PUT',

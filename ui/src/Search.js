@@ -29,7 +29,7 @@ class SearchRow extends Component {
 	}
 
     render() {
-        let url = "http://localhost:" + this.props.serverPort + CUESHEETS_API_PREFIX + "/" + this.props.cuesheetId; //TODO: Use template string
+        let url = "http://localhost:" + this.props.serverPort + CUESHEETS_API_PREFIX + "/" + this.props.uuid;
 
 
 	    return  (
@@ -37,7 +37,6 @@ class SearchRow extends Component {
 	           <td><a href={url} target="_blank">{this.props.title}</a></td>
 	           <td className="textcenter">{this.props.rhythm}</td>
 	           <td className="textcenter">{this.props.phase} {this.props.plusfigures}</td>
-	           <td className="textcenter">{this.props.score}</td>
 	           <td className="textcenter" onClick={this.addToList}>addToList</td>
 	        </tr>
 	    );
@@ -51,10 +50,8 @@ function SearchResult(props) {
 	let searchResult = props.searchResult || [];
 
     const listRows = searchResult.map(result => {
-        let score = result.score.toFixed(2);
-
-        return (<SearchRow cuesheetId={result.id} title={result.title} rhythm={result.rhythm} phase={result.phase}
-            score={score} plusfigures={result.plusfigures} key={result.id} serverPort={props.serverPort}
+        return (<SearchRow cuesheetId={result.id} uuid={result.uuid} title={result.title} rhythm={result.rhythm} phase={result.phase}
+            plusfigures="" key={result.id} serverPort={props.serverPort}
                 addToListHandler={props.addToListHandler} />)
     });
 
@@ -67,7 +64,6 @@ function SearchResult(props) {
                         <td className="textcenter">Title</td>
                         <td className="textcenter">Rhythm</td>
                         <td className="textcenter">Phase</td>
-                        <td className="textcenter">Score</td>
                         <td className="textcenter"></td>
                     </tr>
                 </thead>

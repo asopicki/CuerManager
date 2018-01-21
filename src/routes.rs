@@ -1,6 +1,9 @@
 use documents;
 use playlists;
+use cuecards;
 use serde_json;
+use uuidcrate::Uuid;
+use cuer_database::models::{Playlist, NewPlaylist, Cuecard};
 
 use std::io;
 use std::io::{Error, ErrorKind};
@@ -10,84 +13,73 @@ use rocket_contrib::Json;
 use rocket::response::{content, NamedFile};
 use rocket::http::Status;
 
-#[delete("/playlists/<id>/cuesheet/<cuesheet_id>")]
-fn remove_cuesheet_from_playlist(id: String, cuesheet_id: String) -> Result<content::Json<String>, Status> {
-	return match playlists::remove_cuesheet_from_playlist(&id, &cuesheet_id) {
-		Ok(playlist) => Ok(content::Json(serde_json::to_string(&playlist).unwrap())),
-		Err(e) => {
-			println!("An error occured adding the cuesheet to playlist: {:?}", e);
-			return Err(Status::BadRequest);
-		}
+use diesel::QueryResult;
+use guards::DbConn;
+
+#[derive(Deserialize)]
+struct FormPlaylist {
+	name: String
+}
+
+#[derive(Serialize, Deserialize)]
+struct FullPlaylist {
+	id: i32,
+	uuid: String,
+	name: String,
+	cuecards: Vec<Cuecard>
+}
+
+#[delete("/v2/playlists/<id>/cuesheet/<cuesheet_id>")]
+fn remove_cuesheet_from_playlist(id: i32, cuesheet_id: i32, conn: DbConn) -> QueryResult<Json<usize>> {
+	playlists::remove_cuesheet_from_playlist(&id, &cuesheet_id, &conn).map(|i| Json(i))
+}
+
+#[put("/v2/playlists/<id>/cuesheet/<cuesheet_id>")]
+fn add_cuesheet_to_playlist(id: i32, cuesheet_id: i32, conn: DbConn) -> Result<Json<usize>, Status> {
+	match playlists::add_cuesheet_to_playlist(&id, &cuesheet_id, &conn) {
+		Ok(i) => Ok(Json(i)),
+		_ => Err(Status::BadRequest)
 	}
 }
 
-#[put("/playlists/<id>/cuesheet/<cuesheet_id>")]
-fn add_cuesheet_to_playlist(id: String, cuesheet_id: String) -> Result<content::Json<String>, Status> {
-	return match playlists::add_cuesheet_to_playlist(&id, &cuesheet_id) {
-		Ok(playlist) => {
-			Ok(content::Json(serde_json::to_string(&playlist).unwrap()))
-		},
-		Err(e) => {
-			println!("An error occured adding the cuesheet to playlist: {:?}", e);
-			return Err(Status::BadRequest);
-		}
-	}
+#[delete("/v2/playlists/<id>")]
+fn delete_playlist(id: i32, conn: DbConn) -> QueryResult<Json<usize>> {
+	playlists::delete_playlist(&id, &conn).map(|i| Json(i))
 }
 
-#[delete("/playlists/<id>")]
-fn delete_playlist(id: String) -> Result<content::Json<String>, Status> {
-	match playlists::delete_playlist(&id) {
-		Ok(_) => {
-			let mut json = "{result: \"OK\", id: \"".to_owned();
-			json.push_str(&id);
-			json.push_str(&"\"}".to_owned());
-			return Ok(content::Json(json.to_string()))
-		},
-		Err(e) => {
-			println!("An error occured adding the cuesheet to playlist: {:?}", e);
-			return Err(Status::NotFound);
-		}
-	}
+#[put("/v2/playlists", format="application/json", data="<playlist>")]
+fn create_playlist(playlist: Json<FormPlaylist>, conn: DbConn) -> QueryResult<Json<Playlist>> {
+	let data = playlist.into_inner();
+	let u = Uuid::new_v4().hyphenated().to_string();
+
+	let p = NewPlaylist {
+		uuid: &u,
+		name: &data.name
+	};
+
+	return playlists::create_playlist(&p, &conn).map(|p|Json(p));
 }
 
-#[put("/playlists", format="application/json", data="<playlist>")]
-fn create_playlist(playlist: Json<playlists::Playlist>) -> Result<content::Json<String>, Status> {
-	match playlists::create_playlist(playlist.into_inner()) {
-		Ok(playlist) => {
-			Ok(content::Json(serde_json::to_string(&playlist).unwrap()))
-		}
-		Err(e) => {
-			println!("An error occured creating the playlist: {:?}", e);
-			return Err(Status::BadRequest);
-		}
-	}
+#[get("/v2/playlists/<id>")]
+fn playlist_by_id(id: i32, conn: DbConn) -> QueryResult<Json<Playlist>> {
+	playlists::playlist_by_id(&id, &conn).map(|playlist| Json(playlist))
 }
 
-#[get("/playlists/<id>")]
-fn playlist_by_id(id: String) -> content::Json<String> {
-	return match playlists::playlist_by_id(&id) {
-		Ok(playlist) => {
-			content::Json(serde_json::to_string(&playlist).unwrap())
-		},
-		Err(e) => {
-			println!("An error occured getting the playlist: {:?}", e);
-			return content::Json("{}".to_string());
-		}
-	}
-}
+#[get("/v2/playlists")]
+fn get_playlists(conn: DbConn) -> Json<Vec<FullPlaylist>> {
+	let mut lists : Vec<FullPlaylist> = vec![];
+	for p in  playlists::get_playlists(&conn).unwrap().into_iter() {
+		let cuecards = playlists::get_cuecards(&p, &conn).unwrap();
 
-#[get("/playlists")]
-fn get_playlists() -> content::Json<String> {
-	return match playlists::get_playlists() {
-		Ok(playlists) => {
-			content::Json(serde_json::to_string(&playlists).unwrap())
-		},
-		Err(e) => {
-			println!("An error occured getting the playlist: {:?}", e);
-			return content::Json("[]".to_string());
-		}
+		lists.push(FullPlaylist {
+			id: p.id,
+			uuid: p.uuid,
+			name: p.name,
+			cuecards
+		});
 	}
 
+	return Json(lists);
 }
 
 #[get("/cuesheets/<id>")]
@@ -99,6 +91,11 @@ fn cuesheet_by_id(id: String) -> Option<content::Html<String>> {
 		},
 		_ => None
 	};
+}
+
+#[get("/v2/search/<query>")]
+fn search_cuecards(query: String, conn: DbConn) -> QueryResult<Json<Vec<Cuecard>>> {
+	cuecards::search_cuecards(&query, &conn).map(|v| Json(v))
 }
 
 #[get("/search/<query>")]
