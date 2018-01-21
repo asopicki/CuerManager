@@ -23,6 +23,10 @@ pub fn search_cuecards(query: &String, conn: &DbConn) -> QueryResult<Vec<Cuecard
 	}
 }
 
+pub fn get_cuesheet_content(u: &String, conn: &DbConn) -> QueryResult<Cuecard> {
+	cuer_database::cuecard_by_uuid(u, conn)
+}
+
 fn cuecards_by_phase(p: &str, conn: &SqliteConnection) -> QueryResult<Vec<Cuecard>> {
 	use cuer_database::schema::cuecards::dsl::*;
 

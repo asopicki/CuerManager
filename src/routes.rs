@@ -1,7 +1,7 @@
-use documents;
 use playlists;
 use cuecards;
 use serde_json;
+use comrak::{markdown_to_html, ComrakOptions};
 use uuidcrate::Uuid;
 use cuer_database::models::{Playlist, NewPlaylist, Cuecard};
 
@@ -82,15 +82,24 @@ fn get_playlists(conn: DbConn) -> Json<Vec<FullPlaylist>> {
 	return Json(lists);
 }
 
-#[get("/cuesheets/<id>")]
-fn cuesheet_by_id(id: String) -> Option<content::Html<String>> {
-	return match documents::get_cuesheet_content(&id) {
+#[get("/v2/cuecards/<uuid>")]
+fn cuecard_content_by_uuid(uuid: String, conn: DbConn) -> Result<content::Html<String>, Status> {
+	match cuecards::get_cuesheet_content(&uuid, &conn) {
+		Ok(cuecard) => {
+			let markdown = markdown_to_html(&cuecard.content, &ComrakOptions::default());
+
+			Ok(content::Html(markdown))
+		},
+		_ => Err(Status::NotFound)
+	}
+
+	/*return match documents::get_cuesheet_content(&id) {
 		Ok(cuesheet) => {
 			let html = content::Html(*cuesheet);
 			Some(html)
 		},
 		_ => None
-	};
+	};*/
 }
 
 #[get("/v2/search/<query>")]
@@ -98,29 +107,6 @@ fn search_cuecards(query: String, conn: DbConn) -> QueryResult<Json<Vec<Cuecard>
 	cuecards::search_cuecards(&query, &conn).map(|v| Json(v))
 }
 
-#[get("/search/<query>")]
-fn search_cuesheets(query: String) -> content::Json<String> {
-
-	match _query_cuesheets(&query) {
-		Err(e) => {
-			println!("An error occured reading the cuesheet list: {:?}", e);
-			return content::Json("[]".to_string());
-		},
-		Ok(contents) => {
-			return content::Json(serde_json::to_string(&contents).unwrap());
-		}
-	};
-}
-
-fn _query_cuesheets(query: &str) -> io::Result<Vec<documents::CuesheetMetaData>> {
-	let res = match documents::get_cuesheets(query) {
-		Ok(cuesheets) => Ok(cuesheets),
-
-		Err(_) => Err(Error::new(ErrorKind::InvalidData, "Getting search results failed"))
-	};
-
-	return res;
-}
 
 #[get("/favicon.ico")]
 fn favicon() -> io::Result<NamedFile> {

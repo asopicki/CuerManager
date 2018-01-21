@@ -3,7 +3,6 @@
 
 extern crate rocket;
 extern crate rocket_contrib;
-extern crate rs_es;
 
 #[macro_use]
 extern crate serde_derive;
@@ -21,10 +20,8 @@ extern crate cuer_database;
 #[cfg(test)]
 mod tests;
 
-mod documents;
 mod playlists;
 mod routes;
-mod elastic;
 mod guards;
 mod cuecards;
 
@@ -48,9 +45,8 @@ fn rocket() -> rocket::Rocket {
 	    .mount("/", routes![
             routes::index,
             routes::static_files,
-            routes::search_cuesheets,
             routes::search_cuecards,
-            routes::cuesheet_by_id,
+            routes::cuecard_content_by_uuid,
             routes::favicon,
             routes::get_playlists,
             routes::playlist_by_id,
