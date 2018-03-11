@@ -1,12 +1,10 @@
 use playlists;
 use cuecards;
-use serde_json;
 use comrak::{markdown_to_html, ComrakOptions};
 use uuidcrate::Uuid;
-use cuer_database::models::{Playlist, NewPlaylist, Cuecard};
+use cuer_database::models::{Playlist, PlaylistData, Cuecard};
 
 use std::io;
-use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 
 use rocket_contrib::Json;
@@ -52,7 +50,7 @@ fn create_playlist(playlist: Json<FormPlaylist>, conn: DbConn) -> QueryResult<Js
 	let data = playlist.into_inner();
 	let u = Uuid::new_v4().hyphenated().to_string();
 
-	let p = NewPlaylist {
+	let p = PlaylistData {
 		uuid: &u,
 		name: &data.name
 	};

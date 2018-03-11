@@ -99,7 +99,7 @@ dependencies = [
 
 [[package]]
 name = "cuer_database"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "diesel 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "dotenv 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -112,7 +112,7 @@ name = "cuer_manager"
 version = "0.6.0"
 dependencies = [
  "comrak 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)",
- "cuer_database 0.1.0",
+ "cuer_database 0.2.0",
  "diesel 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "hyper 0.10.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "json_str 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",

@@ -1,9 +1,9 @@
 use diesel::prelude::*;
-use cuer_database::models::{Playlist, PlaylistCuecard, NewPlaylistCuecard, Cuecard, NewPlaylist};
+use cuer_database::models::{Playlist, PlaylistCuecard, NewPlaylistCuecard, Cuecard, PlaylistData};
 use cuer_database;
 use guards::DbConn;
 
-const MAX_RESULTS: u64 = 200;
+const MAX_RESULTS: i64 = 200;
 
 pub enum PlaylistsError {
 	DuplicateCuecard,
@@ -64,11 +64,11 @@ pub fn playlist_by_uuid(u: &String, conn: &SqliteConnection) -> QueryResult<Play
 
 pub fn get_playlists(conn: &SqliteConnection) -> QueryResult<Vec<Playlist>> {
 	use cuer_database::schema::playlists::dsl::*;
-	playlists.order(name.asc()).load::<Playlist>(conn)
+	playlists.order(name.asc()).limit(MAX_RESULTS).load::<Playlist>(conn)
 }
 
-pub fn create_playlist(playlist: &NewPlaylist, conn: &SqliteConnection) -> QueryResult<Playlist> {
-	playlist.create_or_update(conn)
+pub fn create_playlist(playlist: &PlaylistData, conn: &SqliteConnection) -> QueryResult<Playlist> {
+	playlist.create(conn)
 }
 
 pub fn get_cuecards(p: &Playlist, conn: &SqliteConnection) -> QueryResult<Vec<Cuecard>> {
