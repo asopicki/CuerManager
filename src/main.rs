@@ -27,16 +27,28 @@ mod cuecards;
 
 use diesel::sqlite::SqliteConnection;
 use r2d2_diesel::ConnectionManager;
+use std::env;
 
 // An alias to the type for a pool of Diesel SQLite connections.
 type Pool = r2d2::Pool<ConnectionManager<SqliteConnection>>;
 
 // The URL to the database, set via the `DATABASE_URL` environment variable.
-static DATABASE_URL: &'static str = env!("DATABASE_URL");
+static DEFAULT_DATABASE_URL: &'static str = ".local/share/library.db";
 
 /// Initializes a database pool.
 fn init_pool() -> Pool {
-	let manager = ConnectionManager::<SqliteConnection>::new(DATABASE_URL);
+	let envurl = env::var("DATABASE_URL");
+
+	let url = match envurl {
+		Ok(u) => u,
+		_ => {
+			let mut p = env::home_dir().unwrap();
+			p.push(DEFAULT_DATABASE_URL);
+			p.to_str().unwrap().to_string()
+		}
+	};
+
+	let manager = ConnectionManager::<SqliteConnection>::new(url);
 	r2d2::Pool::new(manager).expect("db pool")
 }
 
