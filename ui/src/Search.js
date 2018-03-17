@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import Modal from 'react-modal';
+import { Plus } from 'react-feather';
+
 import {cuesheetSearch, addToListDialog, addToList, closeDialog} from './actions/search';
 import {playlistSearch} from './actions/playlists';
 
@@ -34,10 +36,12 @@ class SearchRow extends Component {
 
 	    return  (
 	        <tr>
-	           <td><a href={url} target="_blank">{this.props.title}</a></td>
-	           <td className="textcenter">{this.props.rhythm}</td>
-	           <td className="textcenter">{this.props.phase} {this.props.plusfigures}</td>
-	           <td className="textcenter" onClick={this.addToList}>addToList</td>
+	           <td className="textcenter phaseColumn">{this.props.phase} {this.props.plusfigures}</td>
+	           <td className="titleColumn"><a href={url} target="_blank">{this.props.title}</a></td>
+	           <td className="textcenter rhythmColumn">{this.props.rhythm}</td>
+	           <td className="textcenter actionColumn" onClick={this.addToList} title="Add to playlist" alt="Add to playlist">
+	            <Plus color="green" size="16"/>
+	           </td>
 	        </tr>
 	    );
 	}
@@ -61,10 +65,10 @@ function SearchResult(props) {
             <table className="textleft">
                 <thead>
                     <tr>
-                        <td className="textcenter">Title</td>
-                        <td className="textcenter">Rhythm</td>
-                        <td className="textcenter">Phase</td>
-                        <td className="textcenter"></td>
+                        <td className="textcenter phaseColumn">Phase</td>
+                        <td className="textcenter titleColumn">Title</td>
+                        <td className="textcenter rhythmColumn">Rhythm</td>
+                        <td className="textcenter actionColumn"></td>
                     </tr>
                 </thead>
                 <tbody>
@@ -171,8 +175,12 @@ class SearchContainer extends Component {
         this.handleSearch('phase:'+phase);
     }
 
-    handleSearchByRhythm(rhythm) {
-        this.handleSearch('rhythm:'+rhythm);
+    handleSearchByRhythm() {
+        let rhythm = document.getElementById('rhythmSelect').value;
+
+		if (rhythm) {
+            this.handleSearch('rhythm:'+rhythm);
+        }
     }
 
     render() {
@@ -186,30 +194,16 @@ class SearchContainer extends Component {
                         onClick={() => this.handleSearchByPhase(phase)} />)
         });
 
-        let mainRhythmButtons = [ 'Two Step', 'Waltz', 'Cha-Cha-Cha', 'Rumba', 'Foxtrot', 'Tango'].map(rhythm => {
-            let name = rhythm;
-            let alt = 'Quick search for cuesheets for the rhythm '+ rhythm;
+        let rhythms = [
+            'Two Step', 'Waltz', 'Cha-Cha-Cha', 'Rumba', 'Foxtrot', 'Tango',
+            'Bolero', 'Mambo', 'Quickstep', 'Jive', 'Slow Two Step',
+            'Samba', 'Single Swing', 'West Coast Swing', 'Paso Doble',
+            'Argentine Tango', 'Hesitation Canter Waltz'
+        ];
 
-            return (<SearchButton name={name} alt={alt} key={name}
-                        onClick={() => this.handleSearchByRhythm(rhythm)} />)
-        });
-
-
-        let advancedRhythmButtons = ['Bolero', 'Mambo', 'Quickstep', 'Jive', 'Slow Two Step', 'Samba'].map(rhythm => {
-            let name = rhythm;
-                    let alt = 'Quick search for cuesheets for the rhythm '+ rhythm;
-
-            return (<SearchButton name={name} alt={alt} key={name}
-                        onClick={() => this.handleSearchByRhythm(rhythm)} />)
-        });
-
-        let additionalRhythmButtons = [ 'Single Swing', 'West Coast Swing', 'Paso Doble', 'Argentine Tango',
-                                        'Hesitation Canter Waltz'].map(rhythm => {
-            let name = rhythm;
-            let alt = 'Quick search for cuesheets for the rhythm '+ rhythm;
-
-            return (<SearchButton name={name} alt={alt} key={name}
-                        onClick={() => this.handleSearchByRhythm(rhythm)} />)
+        let rhythmOptions = rhythms.map(rhythm => {
+            let key = 'opt-' + rhythm;
+            return (<option value={rhythm} key={key}>{rhythm}</option>);
         });
 
         return (
@@ -218,12 +212,18 @@ class SearchContainer extends Component {
 		        <div className="searchInput">
 		            <div className="search">
 		                <SearchForm submitHandler={(query) => self.handleSearch(query)}/>
-		                <div className="searchButtons">
-		                    <div className="phaseSearchButtons">{phaseButtons}</div>
-		                    <div className="rhythmSearchButtons">{mainRhythmButtons}</div>
-		                    <div className="rhythmSearchButtons">{advancedRhythmButtons}</div>
-		                    <div className="rhythmSearchButtons">{additionalRhythmButtons}</div>
+		                <div className="rhythmSearchContainer">
+		                    <select id="rhythmSelect">
+                                <option value="" key="opt-empty"></option>
+                                {rhythmOptions}
+                            </select>
+                            <button name="searchRhythm" onClick={() => this.handleSearchByRhythm()}>
+                                Search rhythm
+                            </button>
 		                </div>
+		                <div className="searchButtons">
+                            <div className="phaseSearchButtons">{phaseButtons}</div>
+                        </div>
 		            </div>
 		        </div>
 		        <SearchResult searchResult={this.props.searchResult} serverPort={this.props.serverPort}

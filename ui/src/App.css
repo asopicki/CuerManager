@@ -9,29 +9,42 @@
 	grid-row: 1 / 2;
 	grid-column: 1 / 4;
 	padding-left: 2em;
+	padding-top: 1em;
 	border-bottom: 3px solid #3c3f41;
-	background-image: -webkit-linear-gradient(top, #3c3f41, #2b2b2b);
-    background-image: -moz-linear-gradient(top, #3c3f41, #2b2b2b);
-    background-image: -ms-linear-gradient(top, #3c3f41, #2b2b2b);
-    background-image: -o-linear-gradient(top, #3c3f41, #2b2b2b);
-    background-image: linear-gradient(to bottom, #3c3f41, #2b2b2b);
+	background-image: linear-gradient(0deg, #3c3f41, #2b2b2b);
 }
 
 .header h1 {
 	color: white;
+	display: inline;
 }
 
-.sidebar {
-	grid-row: 2 / 4;
-	grid-column: 1 /2;
-	border-right: 1px solid black;
-	border-collapse: collapse;
+.topNavigation {
+	text-align: right;
+	margin-top: -2.5em;
+	margin-right: 15em;
 }
+
+.topNavigation li {
+	display:inline;
+	margin-left: 15px;
+
+}
+
+.topNavigation li a {
+	color: white;
+}
+
+.topNavigation li a:hover {
+	color: orange;
+}
+
 
 .App {
 	grid-row: 2 / 3;
-	grid-column: 2 / 4;
+	grid-column: 1 / 4;
 	padding-left: 10px;
+	min-height: 600px;
 }
 
 .footer {
@@ -55,7 +68,11 @@
 }
 
 .search input {
-    width: 40em;
+    width: 30em;
+}
+
+.search form button {
+	margin-left: 5px;
 }
 
 .searchButtons {
@@ -65,6 +82,19 @@
     grid-template-columns: repeat(1, 1fr);
     grid-gap: 5px;
     grid-auto-rows: minmax(30px, 50px);
+}
+
+.rhythmSearchContainer {
+	padding-top: 2em;
+    padding-left: 5.3em;
+}
+
+.rhythmSearchContainer select {
+	width: 27em;
+}
+
+.rhythmSearchContainer button {
+	margin-left: 5px;
 }
 
 .resultList {
@@ -91,6 +121,26 @@
     padding-left: 0.2em;
 }
 
+.titleColumn {
+	width: 50%;
+}
+
+.titleColumn a {
+	margin-left: 0.3em;
+}
+
+.rhythmColumn {
+	width: 15%;
+}
+
+.phaseColumn {
+	width: 15%;
+}
+
+.actionColumn {
+	width: 25%;
+}
+
 .textleft {
     text-align: left;
 }
@@ -110,16 +160,11 @@ a.link {
 
 button {
     background: #3c3f41;
-    background-image: -webkit-linear-gradient(top, #3c3f41, #2b2b2b);
-    background-image: -moz-linear-gradient(top, #3c3f41, #2b2b2b);
-    background-image: -ms-linear-gradient(top, #3c3f41, #2b2b2b);
-    background-image: -o-linear-gradient(top, #3c3f41, #2b2b2b);
-    background-image: linear-gradient(to bottom, #3c3f41, #2b2b2b);
+    background-image: linear-gradient(0deg, #3c3f41, #2b2b2b);
     -webkit-box-shadow: 0px 1px 3px #666666;
     -moz-box-shadow: 0px 1px 3px #666666;
     box-shadow: 0px 1px 3px #666666;
     color: #ffffff;
-    padding: 5px 10px 5px 10px;
     border: solid #4e636e 2px;
     text-decoration: none;
     font-size: 0.95em;
@@ -127,33 +172,21 @@ button {
 
 button:hover {
     background: #656c70;
-    background-image: -webkit-linear-gradient(top, #656c70, #3c3f41);
-    background-image: -moz-linear-gradient(top, #656c70, #3c3f41);
-    background-image: -ms-linear-gradient(top, #656c70, #3c3f41);
-    background-image: -o-linear-gradient(top, #656c70, #3c3f41);
-    background-image: linear-gradient(to bottom, #656c70, #3c3f41);
+    background-image: linear-gradient(0deg, #656c70, #3c3f41);
     text-decoration: none;
 }
 
 .phaseSearchButtons button {
   background: #2b5687;
-  background-image: -webkit-linear-gradient(top, #2b5687, #264972);
-  background-image: -moz-linear-gradient(top, #2b5687, #264972);
-  background-image: -ms-linear-gradient(top, #2b5687, #264972);
-  background-image: -o-linear-gradient(top, #2b5687, #264972);
-  background-image: linear-gradient(to bottom, #2b5687, #264972);
+  background-image: linear-gradient(0deg, #2b5687, #264972);
   border: solid #4e636e 2px;
   color: white;
-  font-size: 1.07em;
+  font-size: 0.95em;
 }
 
 .phaseSearchButtons button:hover {
   background: #656c70;
-  background-image: -webkit-linear-gradient(top, #656c70, #3c3f41);
-  background-image: -moz-linear-gradient(top, #656c70, #3c3f41);
-  background-image: -ms-linear-gradient(top, #656c70, #3c3f41);
-  background-image: -o-linear-gradient(top, #656c70, #3c3f41);
-  background-image: linear-gradient(to bottom, #656c70, #3c3f41);
+  background-image: linear-gradient(0deg, #656c70, #3c3f41);
 }
 
 .phaseSearchButtons {
@@ -161,14 +194,14 @@ button:hover {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   grid-gap: 2px;
-  grid-auto-rows: minmax(30px, 50px);
+  grid-auto-rows: minmax(30px, 80px);
 }
 
 .rhythmSearchButtons {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   grid-gap: 2px;
-  grid-auto-rows: minmax(30px, 50px);
+  grid-auto-rows: minmax(30px, 80px);
 }
 
 .modalDialog {

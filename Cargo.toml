@@ -13,11 +13,11 @@ serde_json = "*"
 serde_derive = "*"
 hyper = "^0.10.11"
 unescape = "0.1.0"
-comrak = "0.1.4"
+comrak = "0.2.8"
 diesel = { version = "1.0", features = ["sqlite"] }
 r2d2-diesel = "1.0"
 r2d2 = "0.8.2"
-uuid = { version = "^0.5", features = ["v4"] }
+uuid = { version = "^0.6", features = ["v4"] }
 cuer_database = { version = "0.2.0", path="../cuer_database" }
 
 [dependencies.rocket_contrib]

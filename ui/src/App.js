@@ -18,14 +18,13 @@ class App extends Component {
 		    <div className="container">
 		        <div className="header">
                     <h1>Cueing Manager</h1>
+                    <nav className="topNavigation">
+                        <ul>
+                            <li><Link to="/">Search</Link></li>
+                            <li><Link to="/playlists">Playlists</Link></li>
+                        </ul>
+                    </nav>
                 </div>
-		        <div className="sidebar">
-		            <ul>
-		                <li><Link to="/">Search</Link></li>
-		                <li><Link to="/playlists">Playlists</Link></li>
-	                </ul>
-		        </div>
-
 				<div className="App">
 		            <Route exact path="/" component={Search} />
 		            <Route path="/playlists" component={PlaylistManager} />

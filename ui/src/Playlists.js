@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import { Delete } from 'react-feather';
+
 import {playlistSearch, createPlaylist, createPlaylistName, removePlaylist, removeCuesheet } from './actions/playlists';
 import {
   Route,
@@ -25,7 +27,9 @@ class CuesheetRow extends Component {
 		return (
 			<tr>
 	            <td><a href={this.props.url} target="_blank">{cuesheet.title}</a></td>
-	            <td className="textcenter" onClick={this.removeCuesheet}>Remove</td>
+	            <td className="textcenter" onClick={this.removeCuesheet} title="Remove cuesheet" alt="Remove cuesheet">
+	                <Delete size="16" color="red" />
+	            </td>
 	        </tr>
 		);
 	}
@@ -132,7 +136,9 @@ class PlaylistRow extends Component {
 	        <tr key={this.props.playlistId}>
 	           <td><Link to={url} >{this.props.name}</Link></td>
 	           <td className="textcenter">n/a</td>
-	           <td className="textcenter" onClick={this.removePlaylist}>remove</td>
+	           <td className="textcenter" onClick={this.removePlaylist} title="Delete playlist" alt="Delete playlist">
+	             <Delete color="red" size="16" />
+	           </td>
 	        </tr>
 	    );
 
