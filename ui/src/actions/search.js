@@ -14,21 +14,21 @@ export const cuesheetSearch = (query, error=undefined) => ({
 	}
 })
 
-export const addToListDialog = (id, title) => ({
+export const addToListDialog = (uuid, title) => ({
 	type: types.CUESHEET_ADD_TO_LIST_DIALOG,
 	payload: {
-		id: id,
+		uuid: uuid,
 		title: title
 	}
 })
 
-export const addToList = (id, titleid, error=undefined) => ({
+export const addToList = (uuid, titleuuid, error=undefined) => ({
 	type: types.API,
 	payload: {
 		success: types.PLAYLIST_UPDATED,
-		url: '/v2//playlists/' + id + '/cuesheet/' + titleid,
-		id: id,
-		titleid: titleid,
+		url: '/v2//playlists/' + uuid + '/cuesheet/' + titleuuid,
+		uuid: uuid,
+		titleuuid: titleuuid,
 		method: 'PUT',
 		error: error
 	},

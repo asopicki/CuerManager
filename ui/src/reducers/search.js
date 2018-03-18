@@ -9,10 +9,10 @@ const cuesheetSearchReducer = (state= {}, action) => {
 
 	switch(action.type) {
 		case constants.CUESHEET_CLOSE_DIALOG: {
-			return Object.assign({}, state, {showDialog: false, addTitle: {id: "", title: ""}});
+			return Object.assign({}, state, {showDialog: false, addTitle: {uuid: "", title: ""}});
 		}
 		case constants.CUESHEET_ADD_TO_LIST_DIALOG: {
-			return Object.assign({}, state, {showDialog: true, addTitle: {id: action.payload.id, title: action.payload.title}});
+			return Object.assign({}, state, {showDialog: true, addTitle: {uuid: action.payload.uuid, title: action.payload.title}});
 		}
 		case constants.CUESHEET_RESULT: {
 			return Object.assign({}, state, {searchResult: _.orderBy(action.payload.result, ['rhythm', 'title'], ['asc', 'asc'])})

@@ -18,7 +18,7 @@ class CuesheetRow extends Component {
 	}
 
 	removeCuesheet() {
-		this.props.removeHandler(this.props.cuesheet.id);
+		this.props.removeHandler(this.props.cuesheet.uuid);
 	}
 
 	render() {
@@ -44,20 +44,20 @@ class Playlist extends Component {
 		this.removeCuesheet = this.removeCuesheet.bind(this);
 	}
 
-	findPlaylist(id) {
-        return this.props.playlists.find(element => element.uuid === id);
+	findPlaylist(uuid) {
+        return this.props.playlists.find(element => element.uuid === uuid)
 	}
 
-	removeCuesheet(cuesheet_id) {
+	removeCuesheet(cuesheet_uuid) {
 		this.playlist.cuecards = this.playlist.cuecards.filter((element) => {
-			return element.id !== cuesheet_id;
+			return element.uuid !== cuesheet_uuid;
 		})
 
-		return this.props.removeCuesheet(this.playlist.id, cuesheet_id)
+		return this.props.removeCuesheet(this.playlist.uuid, cuesheet_uuid)
 	}
 
 	render() {
-		this.playlist = this.findPlaylist(this.props.match.params.id)
+		this.playlist = this.findPlaylist(this.props.match.params.uuid)
 
 		if (this.playlist) {
 
@@ -107,8 +107,8 @@ const mapStateToPlaylistProps = state => {
 
 const mapDispatchToPlaylistProps = dispatch => {
 	return {
-		removeCuesheet: (id, cuesheet_id) => {
-            dispatch(removeCuesheet(id, cuesheet_id))
+		removeCuesheet: (uuid, cuesheet_uuid) => {
+            dispatch(removeCuesheet(uuid, cuesheet_uuid))
         }
 	}
 }
@@ -180,7 +180,7 @@ class PlaylistContainer extends Component {
 		}
 
 		const listRows = this.props.searchResult.map((result, index) => {
-                return (<PlaylistRow key={result.id} playlistId={result.id} uuid={result.uuid}  name={result.name}
+                return (<PlaylistRow key={result.id} playlistId={result.uuid} uuid={result.uuid}  name={result.name}
                     removeHandler={this.removePlaylist}/>)
         });
 
@@ -220,7 +220,7 @@ function PlaylistManager(props) {
     return (
         <div>
             <Route exact path="/playlists" component={PlaylistSearch} />
-            <Route strict path="/playlists/:id" component={PlaylistWithRouter} />
+            <Route strict path="/playlists/:uuid" component={PlaylistWithRouter} />
         </div>
     );
 }

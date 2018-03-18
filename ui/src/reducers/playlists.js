@@ -9,12 +9,19 @@ const playlistsReducer = (state= {}, action) => {
 	switch(action.type) {
 		case constants.PLAYLIST_UPDATED: {
 			let playlists = state.playlistsResult.filter((element) => {
-				return action.payload.result.id !== element.id;
+				return action.payload.result.uuid !== element.uuid;
 			});
 
-			playlists.push(action.payload.result);
+			//playlists.push(action.payload.result);
 
 			return Object.assign({}, state, {playlistsResult: playlists, refresh: true});
+		}
+		case constants.PLAYLIST_REMOVED: {
+			let playlists = state.playlistsResult.filter((element) => {
+                return action.payload.result.id !== element.id;
+            });
+
+            return Object.assign({}, state, {playlistsResult: playlists, refresh: true});
 		}
 		case constants.PLAYLIST_CREATE_NAME: {
 			return Object.assign({}, state, {createForm: {name: action.payload.name}})

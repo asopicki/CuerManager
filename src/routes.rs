@@ -27,22 +27,22 @@ struct FullPlaylist {
 	cuecards: Vec<Cuecard>
 }
 
-#[delete("/v2/playlists/<id>/cuesheet/<cuesheet_id>")]
-fn remove_cuesheet_from_playlist(id: i32, cuesheet_id: i32, conn: DbConn) -> QueryResult<Json<usize>> {
-	playlists::remove_cuesheet_from_playlist(&id, &cuesheet_id, &conn).map(|i| Json(i))
+#[delete("/v2/playlists/<uuid>/cuesheet/<cuesheet_uuid>")]
+fn remove_cuesheet_from_playlist(uuid: String, cuesheet_uuid: String, conn: DbConn) -> QueryResult<Json<usize>> {
+	playlists::remove_cuesheet_from_playlist(&uuid, &cuesheet_uuid, &conn).map(|i| Json(i))
 }
 
-#[put("/v2/playlists/<id>/cuesheet/<cuesheet_id>")]
-fn add_cuesheet_to_playlist(id: i32, cuesheet_id: i32, conn: DbConn) -> Result<Json<usize>, Status> {
-	match playlists::add_cuesheet_to_playlist(&id, &cuesheet_id, &conn) {
-		Ok(i) => Ok(Json(i)),
+#[put("/v2/playlists/<uuid>/cuesheet/<cuesheet_uuid>")]
+fn add_cuesheet_to_playlist(uuid: String, cuesheet_uuid: String, conn: DbConn) -> Result<Json<String>, Status> {
+	match playlists::add_cuesheet_to_playlist(&uuid, &cuesheet_uuid, &conn) {
+		Ok(s) => Ok(Json(s)),
 		_ => Err(Status::BadRequest)
 	}
 }
 
-#[delete("/v2/playlists/<id>")]
-fn delete_playlist(id: i32, conn: DbConn) -> QueryResult<Json<usize>> {
-	playlists::delete_playlist(&id, &conn).map(|i| Json(i))
+#[delete("/v2/playlists/<uuid>")]
+fn delete_playlist(uuid: String, conn: DbConn) -> QueryResult<Json<Playlist>> {
+	playlists::delete_playlist(&uuid, &conn).map(|p| Json(p))
 }
 
 #[put("/v2/playlists", format="application/json", data="<playlist>")]
@@ -58,10 +58,10 @@ fn create_playlist(playlist: Json<FormPlaylist>, conn: DbConn) -> QueryResult<Js
 	return playlists::create_playlist(&p, &conn).map(|p|Json(p));
 }
 
-#[get("/v2/playlists/<id>")]
+/*#[get("/v2/playlists/<id>")]
 fn playlist_by_id(id: i32, conn: DbConn) -> QueryResult<Json<Playlist>> {
 	playlists::playlist_by_id(&id, &conn).map(|playlist| Json(playlist))
-}
+}*/
 
 #[get("/v2/playlists")]
 fn get_playlists(conn: DbConn) -> Json<Vec<FullPlaylist>> {
@@ -90,14 +90,6 @@ fn cuecard_content_by_uuid(uuid: String, conn: DbConn) -> Result<content::Html<S
 		},
 		_ => Err(Status::NotFound)
 	}
-
-	/*return match documents::get_cuesheet_content(&id) {
-		Ok(cuesheet) => {
-			let html = content::Html(*cuesheet);
-			Some(html)
-		},
-		_ => None
-	};*/
 }
 
 #[get("/v2/search/<query>")]
@@ -120,7 +112,5 @@ fn index() -> io::Result<NamedFile> {
 
 fn static_files(file: PathBuf) -> Option<NamedFile> {
 	let path = Path::new("public").join(file);
-	//let filepath = path.as_path().as_os_str().to_os_string().into_string().unwrap();
-	//println!("Path: {}", filepath);
 	NamedFile::open(path).ok()
 }

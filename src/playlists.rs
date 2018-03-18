@@ -10,14 +10,14 @@ pub enum PlaylistsError {
 	AddCuecardERror,
 }
 
-pub fn add_cuesheet_to_playlist(i: &i32, c_id: &i32, conn: &SqliteConnection) -> Result<usize, PlaylistsError> {
+pub fn add_cuesheet_to_playlist(u: &str, c_uuid: &str, conn: &SqliteConnection) -> Result<String, PlaylistsError> {
 	use cuer_database::schema::cuecards::dsl::*;
 
-	let p = playlist_by_id(i, conn).unwrap();
+	let p = playlist_by_uuid(u, conn).unwrap();
 
-	let c = cuecards.filter(id.eq(c_id)).first::<Cuecard>(conn).unwrap();
+	let c = cuecards.filter(uuid.eq(c_uuid)).first::<Cuecard>(conn).unwrap();
 
-	let pc = playlist_cuecard(i, c_id, conn);
+	let pc = playlist_cuecard(&p.id, &c.id, conn);
 
 	if pc.is_ok() {
 		return Err(PlaylistsError::DuplicateCuecard);
@@ -29,15 +29,17 @@ pub fn add_cuesheet_to_playlist(i: &i32, c_id: &i32, conn: &SqliteConnection) ->
 	};
 
 	match entry.create(conn) {
-		Ok(i) => Ok(i),
+		Ok(_i) => Ok(p.uuid),
 		_ => Err(PlaylistsError::AddCuecardERror)
 	}
 }
 
-pub fn remove_cuesheet_from_playlist(i: &i32, c_id: &i32, conn: &SqliteConnection) -> QueryResult<usize> {
-	let p = playlist_cuecard(i, c_id, conn).unwrap();
-	p.delete(conn)
+pub fn remove_cuesheet_from_playlist(u: &str, c_uuid: &str, conn: &SqliteConnection) -> QueryResult<usize> {
+	let p = playlist_by_uuid(u, conn).unwrap();
+	let c = cuer_database::cuecard_by_uuid(&c_uuid.to_string(), conn).unwrap();
 
+	let pc = playlist_cuecard(&p.id, &c.id, conn).unwrap();
+	return pc.delete(conn)
 }
 
 fn playlist_cuecard(i: &i32, c_id: &i32, conn: &SqliteConnection) -> QueryResult<PlaylistCuecard> {
@@ -46,18 +48,20 @@ fn playlist_cuecard(i: &i32, c_id: &i32, conn: &SqliteConnection) -> QueryResult
 		.first::<PlaylistCuecard>(conn)
 }
 
-pub fn delete_playlist(id: &i32, conn: &DbConn) -> QueryResult<usize> {
-	let p = playlist_by_id(id, conn).unwrap();
+pub fn delete_playlist(uuid: &str, conn: &DbConn) -> QueryResult<Playlist> {
+	let p = playlist_by_uuid(uuid, conn).unwrap();
 
-	return p.delete(conn);
+	p.delete(conn).unwrap();
+
+	return Ok(p);
 }
 
-pub fn playlist_by_id(i: &i32, conn: &SqliteConnection) -> QueryResult<Playlist> {
+/* fn playlist_by_id(i: &i32, conn: &SqliteConnection) -> QueryResult<Playlist> {
 	use cuer_database::schema::playlists::dsl::*;
 	playlists.filter(id.eq(i)).first::<Playlist>(conn)
-}
+}*/
 
-pub fn playlist_by_uuid(u: &String, conn: &SqliteConnection) -> QueryResult<Playlist> {
+pub fn playlist_by_uuid(u: &str, conn: &SqliteConnection) -> QueryResult<Playlist> {
 	use cuer_database::schema::playlists::dsl::*;
 	playlists.filter(uuid.eq(u)).first::<Playlist>(conn)
 }
@@ -76,7 +80,3 @@ pub fn get_cuecards(p: &Playlist, conn: &SqliteConnection) -> QueryResult<Vec<Cu
 		.filter(cuer_database::schema::playlist_cuecards::columns::playlist_id.eq(p.id))
 		.select(cuer_database::schema::cuecards::all_columns).load::<Cuecard>(conn)
 }
-
-/*fn save_playlist(playlist: &Playlist)  {
-
-}*/

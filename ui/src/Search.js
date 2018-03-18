@@ -26,8 +26,8 @@ class SearchRow extends Component {
 	}
 
 	addToList() {
-		console.log("Adding to list:", this.props.cuesheetId);
-		this.props.addToListHandler(this.props.cuesheetId, this.props.title);
+		console.log("Adding to list:", this.props.uui);
+		this.props.addToListHandler(this.props.uuid, this.props.title);
 	}
 
     render() {
@@ -115,15 +115,15 @@ class AddToListContainer extends Component {
 	}
 
 	closeDialog(event) {
-		let playlistId = document.getElementById('addTitle').value;
-        this.props.closeDialog(playlistId, this.props.addTitle.id);
+		let playlistUuid = document.getElementById('addTitle').value;
+        this.props.closeDialog(playlistUuid, this.props.addTitle.uuid);
     }
 
     render() {
         let playlists = this.props.playlists || [];
         let options = playlists.map((playlist) => {
             return (
-                <option value={playlist.id} key={playlist.id} >{playlist.name}</option>
+                <option value={playlist.uuid} key={playlist.id} >{playlist.name}</option>
             )
         });
 
@@ -152,11 +152,11 @@ const mapStateToAddToListProps = state => {
 
 const mapDispatchToAddToListProps = dispatch => {
 	return {
-		closeDialog: (id, titleId) => {
+		closeDialog: (uuid, titleUuid) => {
 			dispatch(closeDialog());
 
-			if (id) {
-				dispatch(addToList(id, titleId))
+			if (uuid) {
+				dispatch(addToList(uuid, titleUuid))
 			}
 		}
 	}
@@ -250,8 +250,8 @@ const mapDispatchToProps = dispatch => {
 			dispatch(cuesheetSearch(query))
 			dispatch(playlistSearch())
 		},
-		addToListDialog: (id, title) => {
-			dispatch(addToListDialog(id, title));
+		addToListDialog: (uuiid, title) => {
+			dispatch(addToListDialog(uuiid, title));
 		},
 		closeDialog: () => {
 			dispatch(closeDialog());

@@ -51,11 +51,11 @@ export const removePlaylist = (id, error=undefined) => ({
     }
 })
 
-export const removeCuesheet = (id, cuesheet_id, error=undefined) => ({
+export const removeCuesheet = (uuid, cuesheet_uuid, error=undefined) => ({
 	type: types.API,
 	payload: {
         success: types.PLAYLIST_UPDATED,
-        url: '/v2/playlists/' + id + '/cuesheet/' + cuesheet_id,
+        url: '/v2/playlists/' + uuid + '/cuesheet/' + cuesheet_uuid,
         method: 'DELETE',
         error: error,
         headers: {
