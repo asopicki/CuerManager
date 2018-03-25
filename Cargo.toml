@@ -1,6 +1,6 @@
 [package]
 name = "cuer_manager"
-version = "0.6.4-1"
+version = "0.6.4-2"
 authors = ["Alexander Sopicki"]
 
 [dependencies]

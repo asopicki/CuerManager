@@ -62,7 +62,7 @@ class Playlist extends Component {
 		if (this.playlist) {
 
 			const cuesheetList = this.playlist.cuecards.map(cuesheet => {
-				let url = "http://localhost:"+this.props.serverPort+"/cuesheets/"+cuesheet.uuid;
+				let url = "http://localhost:"+this.props.serverPort+"/v2/cuecards/"+cuesheet.uuid;
 				return (
 					<CuesheetRow key={cuesheet.id} cuesheet={cuesheet} removeHandler={this.removeCuesheet}
 						url={url}/>
