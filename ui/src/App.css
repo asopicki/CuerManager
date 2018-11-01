@@ -121,6 +121,15 @@
     padding-left: 0.2em;
 }
 
+.resultList tbody tr:hover {
+    background-color: rgb(38,73,114);
+    color: white;
+}
+
+.resultList tbody tr:hover a {
+    color: white;
+}
+
 .titleColumn {
 	width: 50%;
 }
