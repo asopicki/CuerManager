@@ -2,4 +2,4 @@
 
 echo "Starting web frontend in development mode..."
 
-yarn start
+yarn --offline start
