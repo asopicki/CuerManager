@@ -1,12 +1,11 @@
 [package]
 name = "cuer_manager"
-version = "0.6.4-2"
+version = "0.7.0-dev"
 authors = ["Alexander Sopicki"]
 
 [dependencies]
 
-rocket = "0.3.6"
-rocket_codegen = "0.3.6"
+rocket = "0.4.0-rc.1"
 json_str = "*"
 serde = "*"
 serde_json = "*"
@@ -19,9 +18,10 @@ r2d2-diesel = "1.0"
 r2d2 = "0.8.2"
 uuid = { version = "^0.6", features = ["v4"] }
 cuer_database = { version = "0.2.0", path="../cuer_database" }
+dirs = "1.0.4"
 
 [dependencies.rocket_contrib]
-version = "0.3.6"
+version = "0.4.0-rc.1"
 default-features = false
 features = ["json"]
 

@@ -1,6 +1,6 @@
-#![feature(plugin)]
-#![plugin(rocket_codegen)]
+#![feature(proc_macro_hygiene, decl_macro)]
 
+#[macro_use]
 extern crate rocket;
 extern crate rocket_contrib;
 
@@ -16,6 +16,7 @@ extern crate r2d2_diesel;
 extern crate r2d2;
 extern crate uuid as uuidcrate;
 extern crate cuer_database;
+extern crate dirs;
 
 #[cfg(test)]
 mod tests;
@@ -42,7 +43,7 @@ fn init_pool() -> Pool {
 	let url = match envurl {
 		Ok(u) => u,
 		_ => {
-			let mut p = env::home_dir().unwrap();
+			let mut p = dirs::home_dir().unwrap();
 			p.push(DEFAULT_DATABASE_URL);
 			p.to_str().unwrap().to_string()
 		}
