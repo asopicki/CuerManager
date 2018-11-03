@@ -190,7 +190,7 @@ dependencies = [
 
 [[package]]
 name = "cuer_manager"
-version = "0.7.0-dev"
+version = "0.7.0"
 dependencies = [
  "comrak 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "cuer_database 0.2.0",
