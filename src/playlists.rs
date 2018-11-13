@@ -1,13 +1,10 @@
 use diesel::prelude::*;
 use cuer_database::models::{Playlist, PlaylistCuecard, NewPlaylistCuecard, Cuecard, PlaylistData};
 use cuer_database;
-use guards::DbConn;
-
-const MAX_RESULTS: i64 = 200;
 
 pub enum PlaylistsError {
 	DuplicateCuecard,
-	AddCuecardERror,
+	AddCuecardError,
 }
 
 pub fn add_cuesheet_to_playlist(u: &str, c_uuid: &str, conn: &SqliteConnection) -> Result<String, PlaylistsError> {
@@ -30,7 +27,7 @@ pub fn add_cuesheet_to_playlist(u: &str, c_uuid: &str, conn: &SqliteConnection) 
 
 	match entry.create(conn) {
 		Ok(_i) => Ok(p.uuid),
-		_ => Err(PlaylistsError::AddCuecardERror)
+		_ => Err(PlaylistsError::AddCuecardError)
 	}
 }
 
@@ -48,18 +45,13 @@ fn playlist_cuecard(i: &i32, c_id: &i32, conn: &SqliteConnection) -> QueryResult
 		.first::<PlaylistCuecard>(conn)
 }
 
-pub fn delete_playlist(uuid: &str, conn: &DbConn) -> QueryResult<Playlist> {
+pub fn delete_playlist(uuid: &str, conn: &SqliteConnection) -> QueryResult<Playlist> {
 	let p = playlist_by_uuid(uuid, conn).unwrap();
 
 	p.delete(conn).unwrap();
 
 	return Ok(p);
 }
-
-/* fn playlist_by_id(i: &i32, conn: &SqliteConnection) -> QueryResult<Playlist> {
-	use cuer_database::schema::playlists::dsl::*;
-	playlists.filter(id.eq(i)).first::<Playlist>(conn)
-}*/
 
 pub fn playlist_by_uuid(u: &str, conn: &SqliteConnection) -> QueryResult<Playlist> {
 	use cuer_database::schema::playlists::dsl::*;
@@ -68,7 +60,7 @@ pub fn playlist_by_uuid(u: &str, conn: &SqliteConnection) -> QueryResult<Playlis
 
 pub fn get_playlists(conn: &SqliteConnection) -> QueryResult<Vec<Playlist>> {
 	use cuer_database::schema::playlists::dsl::*;
-	playlists.order(name.asc()).limit(MAX_RESULTS).load::<Playlist>(conn)
+	playlists.order(name.asc()).load::<Playlist>(conn)
 }
 
 pub fn create_playlist(playlist: &PlaylistData, conn: &SqliteConnection) -> QueryResult<Playlist> {

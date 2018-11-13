@@ -1,8 +1,10 @@
 use playlists;
 use cuecards;
+use programming;
 use comrak::{markdown_to_html, ComrakOptions};
 use uuidcrate::Uuid;
 use cuer_database::models::{Playlist, PlaylistData, Cuecard};
+use cuer_database::models::{Event, EventData}; //, Program, ProgramData, Tip, TipData, TipCuecard, TipCuecardData};
 
 use std::io;
 use std::path::{Path, PathBuf};
@@ -25,6 +27,16 @@ pub struct FullPlaylist {
 	uuid: String,
 	name: String,
 	cuecards: Vec<Cuecard>
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct FormEvent<'a> {
+	name: String,
+	date_start: String,
+	date_end: String,
+	schedule: Option<&'a str>,
+	date_created: String,
+	date_modified: String
 }
 
 #[delete("/v2/playlists/<uuid>/cuesheet/<cuesheet_uuid>")]
@@ -86,8 +98,8 @@ pub fn cuecard_content_by_uuid(uuid: String, conn: DbConn) -> Result<content::Ht
 		Ok(cuecard) => {
 			let markdown = markdown_to_html(&cuecard.content, &ComrakOptions::default());
 
-			Ok(content::Html(markdown))
-		},
+			return Ok(content::Html(markdown));
+		}
 		_ => Err(Status::NotFound)
 	}
 }
@@ -97,6 +109,39 @@ pub fn search_cuecards(query: String, conn: DbConn) -> QueryResult<Json<Vec<Cuec
 	cuecards::search_cuecards(&query, &conn).map(|v| Json(v))
 }
 
+
+#[delete("/v2/events/<uuid>")]
+pub fn delete_event(uuid: String, conn: DbConn) -> Result<Json<Event>, Status> {
+	programming::delete_event(&uuid, &conn).map(|e| Json(e)).or_else(|_| Err(Status::NotFound))
+}
+
+#[get("/v2/events/<uuid>")]
+pub fn event_by_uuid(uuid: String, conn: DbConn) -> Result<Json<Event>, Status> {
+	programming::event_by_uuid(&uuid, &conn).map(|e| Json(e)).or_else(|_| Err(Status::NotFound))
+}
+
+#[get("/v2/events")]
+pub fn get_events(conn: DbConn) -> Result<Json<Vec<Event>>, Status> {
+	programming::get_events(&conn).map(|events| Json(events)).or_else(|_| Err(Status::BadRequest))
+}
+
+#[put("/v2/event", format="application/json", data="<event>")]
+pub fn create_event(event: Json<FormEvent>, conn: DbConn) -> QueryResult<Json<Event>> {
+	let data = event.into_inner();
+	let u = Uuid::new_v4().hyphenated().to_string();
+
+	let e = EventData {
+		uuid: &u,
+		name: &data.name,
+		date_start: &data.date_start,
+		date_end: &data.date_end,
+		schedule: data.schedule,
+		date_created: &data.date_created,
+		date_modified: &data.date_modified
+	};
+
+	return programming::create_event(&e, &conn).map(|e|Json(e));
+}
 
 #[get("/favicon.ico")]
 pub fn favicon() -> io::Result<NamedFile> {

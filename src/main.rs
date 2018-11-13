@@ -25,6 +25,7 @@ mod playlists;
 mod routes;
 mod guards;
 mod cuecards;
+mod programming;
 
 use diesel::sqlite::SqliteConnection;
 use r2d2_diesel::ConnectionManager;
@@ -65,7 +66,11 @@ fn rocket() -> rocket::Rocket {
             routes::create_playlist,
             routes::add_cuesheet_to_playlist,
             routes::delete_playlist,
-            routes::remove_cuesheet_from_playlist],)
+            routes::remove_cuesheet_from_playlist,
+            routes::get_events,
+            routes::event_by_uuid,
+            routes::delete_event,
+            routes::create_event],)
 }
 
 fn main() {
