@@ -1,6 +1,8 @@
 target
 .idea
 cuer_manager.iml
+.library.db
+empty.db
 
 #fronten
 ui/node_modules/

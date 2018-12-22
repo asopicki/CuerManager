@@ -30,7 +30,7 @@ pub fn event_by_uuid(u: &str, conn: &SqliteConnection) -> QueryResult<Event> {
 
 pub fn get_events(conn: &SqliteConnection) -> QueryResult<Vec<Event>> {
     use cuer_database::schema::events::dsl::*;
-    events.order(name.asc()).load::<Event>(conn)
+    events.order(date_start.asc()).load::<Event>(conn)
 }
 
 pub fn create_event(event: &EventData, conn: &SqliteConnection) -> QueryResult<Event> {

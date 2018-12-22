@@ -60,7 +60,7 @@ pub fn delete_playlist(uuid: String, conn: DbConn) -> QueryResult<Json<Playlist>
 #[put("/v2/playlists", format="application/json", data="<playlist>")]
 pub fn create_playlist(playlist: Json<FormPlaylist>, conn: DbConn) -> QueryResult<Json<Playlist>> {
 	let data = playlist.into_inner();
-	let u = Uuid::new_v4().hyphenated().to_string();
+	let u = Uuid::new_v4().to_hyphenated().to_string();
 
 	let p = PlaylistData {
 		uuid: &u,
@@ -128,7 +128,7 @@ pub fn get_events(conn: DbConn) -> Result<Json<Vec<Event>>, Status> {
 #[put("/v2/event", format="application/json", data="<event>")]
 pub fn create_event(event: Json<FormEvent>, conn: DbConn) -> QueryResult<Json<Event>> {
 	let data = event.into_inner();
-	let u = Uuid::new_v4().hyphenated().to_string();
+	let u = Uuid::new_v4().to_hyphenated().to_string();
 
 	let e = EventData {
 		uuid: &u,
