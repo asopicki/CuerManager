@@ -13,8 +13,10 @@ use rocket_contrib::json::Json;
 use rocket::response::{content, NamedFile};
 use rocket::http::Status;
 
+use chrono::prelude::*;
+
 use diesel::QueryResult;
-use guards::DbConn;
+use super::DbConn;
 
 #[derive(Deserialize)]
 pub struct FormPlaylist {
@@ -120,9 +122,27 @@ pub fn event_by_uuid(uuid: String, conn: DbConn) -> Result<Json<Event>, Status> 
 	programming::event_by_uuid(&uuid, &conn).map(|e| Json(e)).or_else(|_| Err(Status::NotFound))
 }
 
-#[get("/v2/events")]
-pub fn get_events(conn: DbConn) -> Result<Json<Vec<Event>>, Status> {
-	programming::get_events(&conn).map(|events| Json(events)).or_else(|_| Err(Status::BadRequest))
+#[get("/v2/events/<min_date>/<max_date>")]
+pub fn get_events(conn: DbConn, min_date: String, max_date: String) -> Result<Json<Vec<Event>>, Status> {
+	let start_date = DateTime::parse_from_rfc3339(min_date.as_str());
+	let end_date = DateTime::parse_from_rfc3339(max_date.as_str());
+
+	if start_date.is_err() {
+		return Err(Status::BadRequest);
+	}
+
+	if end_date.is_err() {
+		return Err(Status::BadRequest);
+	}
+
+	let start_date = start_date.unwrap();
+	let end_date = end_date.unwrap();
+
+	if start_date > end_date {
+		return Err(Status::BadRequest);
+	}
+	
+	programming::get_events(&conn, start_date.to_rfc3339(), end_date.to_rfc3339()).map(|events| Json(events)).or_else(|_| Err(Status::BadRequest))
 }
 
 #[put("/v2/event", format="application/json", data="<event>")]

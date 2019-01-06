@@ -2,6 +2,7 @@
 
 #[macro_use]
 extern crate rocket;
+#[macro_use]
 extern crate rocket_contrib;
 
 #[macro_use]
@@ -11,51 +12,29 @@ extern crate serde;
 extern crate serde_json;
 extern crate unescape;
 extern crate comrak;
-extern crate diesel;
-extern crate r2d2_diesel;
-extern crate r2d2;
 extern crate uuid as uuidcrate;
 extern crate cuer_database;
 extern crate dirs;
+extern crate chrono;
 
 #[cfg(test)]
 mod tests;
 
 mod playlists;
 mod routes;
-mod guards;
 mod cuecards;
 mod programming;
 
-use diesel::sqlite::SqliteConnection;
-use r2d2_diesel::ConnectionManager;
-use std::env;
+use rocket_contrib::databases::diesel;
 
-// An alias to the type for a pool of Diesel SQLite connections.
-type Pool = r2d2::Pool<ConnectionManager<SqliteConnection>>;
+#[database("sqlite_db")]
+pub struct DbConn(diesel::SqliteConnection);
 
 // The URL to the database, set via the `DATABASE_URL` environment variable.
-static DEFAULT_DATABASE_URL: &'static str = ".local/share/library.db";
-
-/// Initializes a database pool.
-fn init_pool() -> Pool {
-	let envurl = env::var("DATABASE_URL");
-
-	let url = match envurl {
-		Ok(u) => u,
-		_ => {
-			let mut p = dirs::home_dir().unwrap();
-			p.push(DEFAULT_DATABASE_URL);
-			p.to_str().unwrap().to_string()
-		}
-	};
-
-	let manager = ConnectionManager::<SqliteConnection>::new(url);
-	r2d2::Pool::new(manager).expect("db pool")
-}
+//static DEFAULT_DATABASE_URL: &'static str = ".local/share/library.db";
 
 fn rocket() -> rocket::Rocket {
-    rocket::ignite().manage(init_pool())
+    rocket::ignite().attach(DbConn::fairing())
 	    .mount("/", routes![
             routes::index,
             routes::static_files,

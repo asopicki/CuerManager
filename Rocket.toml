@@ -5,6 +5,12 @@ address = "localhost"
 port = 8087
 log = "normal"
 
+[development.databases]
+sqlite_db = { url = "/home/alex/.library.db"}
+
 [staging]
 port = 8086
 log = "normal"
+
+[production.databases]
+sqlite_db = { url = "/home/alex/.local/share/library.db"}

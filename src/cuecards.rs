@@ -1,8 +1,8 @@
 use diesel::prelude::*;
 use cuer_database::models::{Cuecard};
 use cuer_database;
-use guards::DbConn;
 
+use super::DbConn;
 
 pub fn search_cuecards(query: &String, conn: &DbConn) -> QueryResult<Vec<Cuecard>> {
 

@@ -28,9 +28,12 @@ pub fn event_by_uuid(u: &str, conn: &SqliteConnection) -> QueryResult<Event> {
     events.filter(uuid.eq(u)).first::<Event>(conn)
 }
 
-pub fn get_events(conn: &SqliteConnection) -> QueryResult<Vec<Event>> {
+pub fn get_events(conn: &SqliteConnection, min_date: String, max_date: String) -> QueryResult<Vec<Event>> {
     use cuer_database::schema::events::dsl::*;
-    events.order(date_start.asc()).load::<Event>(conn)
+    events
+        .filter(date_start.ge(min_date))
+        .filter(date_start.lt(max_date))
+        .order(date_start.asc()).load::<Event>(conn)
 }
 
 pub fn create_event(event: &EventData, conn: &SqliteConnection) -> QueryResult<Event> {
