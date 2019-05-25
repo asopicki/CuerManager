@@ -14,7 +14,7 @@ pub fn add_cuesheet_to_playlist(u: &str, c_uuid: &str, conn: &SqliteConnection) 
 
 	let c = cuecards.filter(uuid.eq(c_uuid)).first::<Cuecard>(conn).unwrap();
 
-	let pc = playlist_cuecard(&p.id, &c.id, conn);
+	let pc = playlist_cuecard(p.id, c.id, conn);
 
 	if pc.is_ok() {
 		return Err(PlaylistsError::DuplicateCuecard);
@@ -35,11 +35,11 @@ pub fn remove_cuesheet_from_playlist(u: &str, c_uuid: &str, conn: &SqliteConnect
 	let p = playlist_by_uuid(u, conn).unwrap();
 	let c = cuer_database::cuecard_by_uuid(&c_uuid.to_string(), conn).unwrap();
 
-	let pc = playlist_cuecard(&p.id, &c.id, conn).unwrap();
-	return pc.delete(conn)
+	let pc = playlist_cuecard(p.id, c.id, conn).unwrap();
+	pc.delete(conn)
 }
 
-fn playlist_cuecard(i: &i32, c_id: &i32, conn: &SqliteConnection) -> QueryResult<PlaylistCuecard> {
+fn playlist_cuecard(i: i32, c_id: i32, conn: &SqliteConnection) -> QueryResult<PlaylistCuecard> {
 	use cuer_database::schema::playlist_cuecards::dsl::*;
 	playlist_cuecards.filter(playlist_id.eq(i).and(cuecard_id.eq(c_id)))
 		.first::<PlaylistCuecard>(conn)
@@ -50,7 +50,7 @@ pub fn delete_playlist(uuid: &str, conn: &SqliteConnection) -> QueryResult<Playl
 
 	p.delete(conn).unwrap();
 
-	return Ok(p);
+	Ok(p)
 }
 
 pub fn playlist_by_uuid(u: &str, conn: &SqliteConnection) -> QueryResult<Playlist> {

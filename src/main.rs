@@ -49,7 +49,13 @@ fn rocket() -> rocket::Rocket {
             routes::get_events,
             routes::event_by_uuid,
             routes::delete_event,
-            routes::create_event],)
+            routes::create_event,
+            routes::get_program,
+            routes::get_tips,
+            routes::create_tip,
+            routes::remove_tip,
+            routes::create_tip_cuecard,
+            routes::remove_tip_cuecard],)
 }
 
 fn main() {

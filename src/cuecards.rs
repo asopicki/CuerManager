@@ -4,12 +4,12 @@ use cuer_database;
 
 use super::DbConn;
 
-pub fn search_cuecards(query: &String, conn: &DbConn) -> QueryResult<Vec<Cuecard>> {
+pub fn search_cuecards(query: &str, conn: &DbConn) -> QueryResult<Vec<Cuecard>> {
 
-	let has_search_prefix = query.contains(":");
+	let has_search_prefix = query.contains(':');
 
 	if has_search_prefix {
-		let parts = query.splitn(2, ":").collect::<Vec<_>>();
+		let parts = query.splitn(2, ':').collect::<Vec<_>>();
 		let mut iter = parts.iter();
 		let (search_type, search_string) = (iter.next().unwrap(), iter.next().unwrap());
 
@@ -23,7 +23,7 @@ pub fn search_cuecards(query: &String, conn: &DbConn) -> QueryResult<Vec<Cuecard
 	}
 }
 
-pub fn get_cuesheet_content(u: &String, conn: &DbConn) -> QueryResult<Cuecard> {
+pub fn get_cuesheet_content(u: &str, conn: &DbConn) -> QueryResult<Cuecard> {
 	cuer_database::cuecard_by_uuid(u, conn)
 }
 
@@ -46,8 +46,8 @@ fn cuecards_meta_search(q: &str, conn: &SqliteConnection) -> QueryResult<Vec<Cue
 		.filter(cuer_database::cd_match(cardindex::columns::content, q))
 		.load::<i32>(conn).unwrap();
 
-	return  cuecards::table.select(cuecards::all_columns).filter(cuecards::columns::id.eq_any(ids))
-		.load::<Cuecard>(conn);
+	cuecards::table.select(cuecards::all_columns).filter(cuecards::columns::id.eq_any(ids))
+		.load::<Cuecard>(conn)
 }
 
 fn cuecards_content_search(q: &str, conn: &SqliteConnection) -> QueryResult<Vec<Cuecard>> {
@@ -57,7 +57,7 @@ fn cuecards_content_search(q: &str, conn: &SqliteConnection) -> QueryResult<Vec<
 		.filter(cuer_database::cd_match(cardindex::columns::content, q))
 		.load::<i32>(conn).unwrap();
 
-	return  cuecards::table.select(cuecards::all_columns).filter(cuecards::columns::id.eq_any(ids))
-		.load::<Cuecard>(conn);
+	cuecards::table.select(cuecards::all_columns).filter(cuecards::columns::id.eq_any(ids))
+		.load::<Cuecard>(conn)
 }
 
