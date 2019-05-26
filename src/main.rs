@@ -8,22 +8,22 @@ extern crate rocket_contrib;
 #[macro_use]
 extern crate serde_derive;
 
+extern crate chrono;
+extern crate comrak;
+extern crate cuer_database;
+extern crate dirs;
 extern crate serde;
 extern crate serde_json;
 extern crate unescape;
-extern crate comrak;
 extern crate uuid as uuidcrate;
-extern crate cuer_database;
-extern crate dirs;
-extern crate chrono;
 
 #[cfg(test)]
 mod tests;
 
-mod playlists;
-mod routes;
 mod cuecards;
+mod playlists;
 mod programming;
+mod routes;
 
 use rocket_contrib::databases::diesel;
 
@@ -34,8 +34,9 @@ pub struct DbConn(diesel::SqliteConnection);
 //static DEFAULT_DATABASE_URL: &'static str = ".local/share/library.db";
 
 fn rocket() -> rocket::Rocket {
-    rocket::ignite().attach(DbConn::fairing())
-	    .mount("/", routes![
+    rocket::ignite().attach(DbConn::fairing()).mount(
+        "/",
+        routes![
             routes::index,
             routes::static_files,
             routes::search_cuecards,
@@ -55,7 +56,9 @@ fn rocket() -> rocket::Rocket {
             routes::create_tip,
             routes::remove_tip,
             routes::create_tip_cuecard,
-            routes::remove_tip_cuecard],)
+            routes::remove_tip_cuecard
+        ],
+    )
 }
 
 fn main() {
