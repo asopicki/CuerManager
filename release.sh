@@ -11,12 +11,12 @@ git checkout v${VERSION}
 
 cd ui
 echo "Building web frontend ..."
-yarn build
+ng build --aot=false --prod --deploy-url=static/
 
 cd ../
 
-rsync -av ui/build/static/ public/
-cp ui/build/* public/
+rsync -av ui/dist/cuer-manager-ui public/
+#cp ui/build/* public/
 
 echo "Building application..."
 cargo build --release
