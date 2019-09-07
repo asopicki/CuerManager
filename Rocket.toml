@@ -6,11 +6,11 @@ port = 8087
 log = "normal"
 
 [development.databases]
-sqlite_db = { url = "/home/alex/.library.db"}
+sqlite_db = { url = "/home/alex/.library.db", pool_size = 1}
 
 [staging]
 port = 8086
 log = "normal"
 
 [production.databases]
-sqlite_db = { url = "/home/alex/.local/share/library.db"}
+sqlite_db = { url = "/home/alex/.local/share/library.db", pool_size = 1 }

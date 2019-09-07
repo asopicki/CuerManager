@@ -81,6 +81,7 @@ pub struct FormTip {
 pub struct FormTipCuecard {
     tip_uuid: String,
     cuecard_uuid: String,
+    sort_order: i32,
 }
 
 #[delete("/v2/playlists/<uuid>/cuesheet/<cuesheet_uuid>")]
@@ -353,9 +354,41 @@ pub fn create_tip_cuecard(
     let tip_cuecard_data = TipCuecardData {
         tip_id: &tip.id,
         cuecard_id: &cuecard.id,
+        sort_order: &data.sort_order
     };
 
     let result = programming::create_tip_cuecard(&tip_cuecard_data, &conn);
+
+    match result {
+        Ok(_) => Ok(Json(())),
+        Err(_) => Err(Status::BadRequest),
+    }
+}
+
+#[post("/v2/tip_cuecard", format = "application/json", data = "<tip_cuecard>")]
+pub fn update_tip_cuecard(
+    tip_cuecard: Json<FormTipCuecard>,
+    conn: DbConn,
+) -> Result<Json<()>, Status> {
+    let data = tip_cuecard.into_inner();
+
+    let tip = match cuer_database::tip_by_uuid(&data.tip_uuid, &conn) {
+        Ok(tip) => tip,
+        Err(_) => return Err(Status::NotFound),
+    };
+
+    let cuecard = match cuer_database::cuecard_by_uuid(&data.cuecard_uuid, &conn) {
+        Ok(cuecard) => cuecard,
+        Err(_) => return Err(Status::NotFound),
+    };
+
+    let tip_cuecard_data = TipCuecardData {
+        tip_id: &tip.id,
+        cuecard_id: &cuecard.id,
+        sort_order: &data.sort_order
+    };
+
+    let result = programming::update_tip_cuecard(&tip_cuecard_data, &conn);
 
     match result {
         Ok(_) => Ok(Json(())),
@@ -382,9 +415,15 @@ pub fn remove_tip_cuecard(
         Err(_) => return Err(Status::NotFound),
     };
 
+    let tip_cuecard = match programming::get_tip_cuecard(tip.id, cuecard.id, &conn) {
+        Ok(tip_cuecard) => tip_cuecard,
+        Err(_) => return Err(Status::NotFound),
+    };
+
     let tip_cuecard_data = TipCuecardData {
-        tip_id: &tip.id,
-        cuecard_id: &cuecard.id,
+        tip_id: &tip_cuecard.tip_id,
+        cuecard_id: &tip_cuecard.cuecard_id,
+        sort_order: &tip_cuecard.sort_order
     };
 
     let result = programming::remove_tip_cuecard(&tip_cuecard_data, &conn);

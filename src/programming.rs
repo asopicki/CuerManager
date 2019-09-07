@@ -1,4 +1,4 @@
-use cuer_database::models::{Cuecard, Event, EventData, Program, Tip, TipCuecardData, TipData};
+use cuer_database::models::{Cuecard, Event, EventData, Program, Tip, TipCuecard, TipCuecardData, TipData};
 /**
 
 This file contains all database related functions required for the programming of events.
@@ -72,6 +72,18 @@ pub fn create_tip_cuecard(
     tip_cuecard.create(conn)
 }
 
+pub fn update_tip_cuecard(
+    tip_cuecard: &TipCuecardData,
+    conn: &SqliteConnection,
+) -> QueryResult<usize> {
+    use cuer_database::schema::tip_cuecards::dsl::*;
+    
+    diesel::update(tip_cuecards).set(tip_cuecard)
+        .filter(tip_id.eq(tip_cuecard.tip_id))
+        .filter(cuecard_id.eq(tip_cuecard.cuecard_id))
+        .execute(conn)
+}
+
 pub fn remove_tip_cuecard(
     tip_cuecard: &TipCuecardData,
     conn: &SqliteConnection,
@@ -79,10 +91,20 @@ pub fn remove_tip_cuecard(
     tip_cuecard.delete(conn)
 }
 
+pub fn get_tip_cuecard(t_id: i32, c_id: i32, conn: &SqliteConnection) -> QueryResult<TipCuecard> {
+    use cuer_database::schema::tip_cuecards::dsl::*;
+        
+    tip_cuecards
+        .filter(tip_id.eq(t_id))
+        .filter(cuecard_id.eq(c_id))
+        .first::<TipCuecard>(conn)
+}
+
 pub fn get_cuecards(tip: &Tip, conn: &SqliteConnection) -> QueryResult<Vec<Cuecard>> {
     cuer_database::schema::tip_cuecards::table
         .inner_join(cuer_database::schema::cuecards::table)
         .filter(cuer_database::schema::tip_cuecards::columns::tip_id.eq(tip.id))
         .select(cuer_database::schema::cuecards::all_columns)
+        .order(cuer_database::schema::tip_cuecards::columns::sort_order)
         .load::<Cuecard>(conn)
 }
