@@ -15,8 +15,8 @@ ng build --aot=false --prod --deploy-url=static/
 
 cd ../
 
-rsync -av ui/dist/cuer-manager-ui public/
-#cp ui/build/* public/
+rm -r public
+cp -r ui/dist/cuer-manager-ui/ public
 
 echo "Building application..."
 cargo build --release
