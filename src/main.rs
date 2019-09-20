@@ -57,7 +57,8 @@ fn rocket() -> rocket::Rocket {
             routes::remove_tip,
             routes::create_tip_cuecard,
             routes::update_tip_cuecard,
-            routes::remove_tip_cuecard
+            routes::remove_tip_cuecard,
+            routes::catchall,
         ],
     )
 }

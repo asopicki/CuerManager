@@ -444,6 +444,11 @@ pub fn index() -> io::Result<NamedFile> {
     NamedFile::open("public/index.html")
 }
 
+#[get("/<something..>", rank=2)]
+pub fn catchall(something: PathBuf) -> io::Result<NamedFile> {
+    NamedFile::open("public/index.html")
+}
+
 #[get("/static/<file..>")]
 pub fn static_files(file: PathBuf) -> Option<NamedFile> {
     let path = Path::new("public").join(file);
