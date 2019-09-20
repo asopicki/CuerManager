@@ -444,6 +444,7 @@ pub fn index() -> io::Result<NamedFile> {
     NamedFile::open("public/index.html")
 }
 
+#[allow(unused_variables)]
 #[get("/<something..>", rank=2)]
 pub fn catchall(something: PathBuf) -> io::Result<NamedFile> {
     NamedFile::open("public/index.html")
