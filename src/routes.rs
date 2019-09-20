@@ -241,7 +241,7 @@ pub fn create_event(event: Json<FormEvent>, conn: DbConn) -> Result<Json<Event>,
                     uuid: &u,
                     notes: None,
                     event_id: &event.id,
-                    date_created: &data.date_start,
+                    date_created: &data.date_created,
                     date_modified: &data.date_modified,
                 };
 
