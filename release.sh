@@ -21,6 +21,7 @@ cp -r ui/dist/cuer-manager-ui/ public
 echo "Building application..."
 cargo build --release
 
+rm -r target/release/public
 cp -r public target/release/
 cd target
 tar --transform "s,release,cuer_manager-$VERSION," -czf "cuer_manager-$VERSION.tar.gz" release/cuer_manager release/public
