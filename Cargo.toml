@@ -1,11 +1,11 @@
 [package]
 name = "cuer_manager"
-version = "0.9.2"
+version = "0.9.3"
 authors = ["Alexander Sopicki"]
 
 [dependencies]
 
-rocket = "0.4.0"
+rocket = "0.4.2"
 json_str = "*"
 serde = "*"
 serde_json = "*"
@@ -22,7 +22,7 @@ cuer_database = { version = "^0.5", git="https://github.com/asopicki/cuer_databa
 dirs = "1.0.4"
 
 [dependencies.rocket_contrib]
-version = "0.4.0"
+version = "0.4.2"
 default-features = false
 features = ["json", "diesel_sqlite_pool"]
 
