@@ -11,7 +11,7 @@ git checkout v${VERSION}
 
 cd ui
 echo "Building web frontend ..."
-ng build --aot=false --prod --deploy-url=static/
+ng build --prod --deploy-url=static/
 
 cd ../
 
