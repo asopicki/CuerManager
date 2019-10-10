@@ -1,10 +1,10 @@
 use comrak::{markdown_to_html, ComrakOptions};
-use cuecards;
+use crate::cuecards;
 use cuer_database;
 use cuer_database::models::{Cuecard, Playlist, PlaylistData};
 use cuer_database::models::{Event, EventData, Program, ProgramData, Tip, TipCuecardData, TipData}; //TipCuecard};
-use playlists;
-use programming;
+use crate::playlists;
+use crate::programming;
 use uuidcrate::Uuid;
 
 use std::convert::From;
@@ -157,6 +157,8 @@ pub fn cuecard_content_by_uuid(
                 ext_footnotes: true,
                 ext_table: true,
                 hardbreaks: true,
+                ext_tagfilter: true,
+                unsafe_: true,
                 ..ComrakOptions::default()
             };
             let markdown = markdown_to_html(&cuecard.content, &options);
@@ -453,5 +455,12 @@ pub fn catchall(something: PathBuf) -> io::Result<NamedFile> {
 #[get("/static/<file..>")]
 pub fn static_files(file: PathBuf) -> Option<NamedFile> {
     let path = Path::new("public").join(file);
+    NamedFile::open(path).ok()
+}
+
+#[get("/v2/audio/<file..>")]
+pub fn audio_file(file: PathBuf) -> Option<NamedFile> {
+    let file = format!("/home/music/collection/{}", file.to_str()?);
+    let path = Path::new(&file);
     NamedFile::open(path).ok()
 }

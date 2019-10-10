@@ -59,6 +59,7 @@ fn rocket() -> rocket::Rocket {
             routes::update_tip_cuecard,
             routes::remove_tip_cuecard,
             routes::catchall,
+            routes::audio_file,
         ],
     )
 }
