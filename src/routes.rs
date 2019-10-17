@@ -84,6 +84,11 @@ pub struct FormTipCuecard {
     sort_order: i32,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct FormCuecardMarks {
+    karaoke_marks: String
+}
+
 #[delete("/v2/playlists/<uuid>/cuesheet/<cuesheet_uuid>")]
 pub fn remove_cuesheet_from_playlist(
     uuid: String,
@@ -166,6 +171,21 @@ pub fn cuecard_content_by_uuid(
             Ok(content::Html(markdown))
         }
         _ => Err(Status::NotFound),
+    }
+}
+
+#[post("/v2/cuecards/<uuid>/marks", format = "application/json", data = "<marks>")]
+pub fn set_marks(uuid: String, marks: Json<FormCuecardMarks>, conn: DbConn) -> Result<(), Status> {
+    let data = marks.into_inner();
+
+    let cuecard = match cuer_database::cuecard_by_uuid(&uuid, &conn) {
+        Ok(cuecard) => cuecard,
+        Err(_) => return Err(Status::NotFound),
+    };
+
+    match programming::set_marks(cuecard.id, &data.karaoke_marks, &conn) {
+        Ok(_) => return Ok(()),
+        Err(_) => return Err(Status::BadRequest)
     }
 }
 

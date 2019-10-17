@@ -60,6 +60,7 @@ fn rocket() -> rocket::Rocket {
             routes::remove_tip_cuecard,
             routes::catchall,
             routes::audio_file,
+            routes::set_marks
         ],
     )
 }

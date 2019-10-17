@@ -108,3 +108,11 @@ pub fn get_cuecards(tip: &Tip, conn: &SqliteConnection) -> QueryResult<Vec<Cueca
         .order(cuer_database::schema::tip_cuecards::columns::sort_order)
         .load::<Cuecard>(conn)
 }
+
+pub fn set_marks(c_id: i32, marks: &str, conn: &SqliteConnection) -> QueryResult<usize> {
+    use cuer_database::schema::cuecards::dsl::*;
+
+    diesel::update(cuecards.filter(id.eq(c_id)))
+        .set(karaoke_marks.eq(marks))
+        .execute(conn)
+}
