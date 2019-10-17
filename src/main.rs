@@ -26,6 +26,9 @@ mod programming;
 mod routes;
 
 use rocket_contrib::databases::diesel;
+use rocket::fairing::AdHoc;
+
+use routes::AssetsDir;
 
 #[database("sqlite_db")]
 pub struct DbConn(diesel::SqliteConnection);
@@ -40,6 +43,7 @@ fn rocket() -> rocket::Rocket {
             routes::index,
             routes::static_files,
             routes::search_cuecards,
+            routes::get_cuecard_by_uuid,
             routes::cuecard_content_by_uuid,
             routes::favicon,
             routes::get_playlists,
@@ -63,6 +67,14 @@ fn rocket() -> rocket::Rocket {
             routes::set_marks
         ],
     )
+    .attach(AdHoc::on_attach("Assets Config", |rocket| {
+            let assets_dir = rocket.config()
+                .get_str("assets_dir")
+                .unwrap_or("/home/music/collection")
+                .to_string();
+
+            Ok(rocket.manage(AssetsDir { assets_dir: assets_dir }))
+    }))
 }
 
 fn main() {

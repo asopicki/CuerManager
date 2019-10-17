@@ -1,5 +1,6 @@
 [global]
 address = "localhost"
+assets_dir = "/home/music/collection"
 
 [development]
 port = 8087

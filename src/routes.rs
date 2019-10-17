@@ -14,6 +14,7 @@ use std::path::{Path, PathBuf};
 use rocket::http::Status;
 use rocket::response::{content, NamedFile};
 use rocket_contrib::json::Json;
+use rocket::State;
 
 use chrono::prelude::*;
 
@@ -150,7 +151,7 @@ pub fn get_playlists(conn: DbConn) -> Json<Vec<FullPlaylist>> {
     Json(lists)
 }
 
-#[get("/v2/cuecards/<uuid>")]
+#[get("/v2/cuecards/<uuid>/content")]
 pub fn cuecard_content_by_uuid(
     uuid: String,
     conn: DbConn,
@@ -171,6 +172,14 @@ pub fn cuecard_content_by_uuid(
             Ok(content::Html(markdown))
         }
         _ => Err(Status::NotFound),
+    }
+}
+
+#[get("/v2/cuecards/<uuid>")]
+pub fn get_cuecard_by_uuid(uuid: String, conn: DbConn) -> Result<Json<Cuecard>, Status> {
+    match cuer_database::cuecard_by_uuid(&uuid, &conn) {
+        Ok(cuecard) => Ok(Json(cuecard)),
+        Err(_) => Err(Status::NotFound)
     }
 }
 
@@ -478,9 +487,12 @@ pub fn static_files(file: PathBuf) -> Option<NamedFile> {
     NamedFile::open(path).ok()
 }
 
+pub struct AssetsDir {
+    pub assets_dir: String,
+}
+
 #[get("/v2/audio/<file..>")]
-pub fn audio_file(file: PathBuf) -> Option<NamedFile> {
-    let file = format!("/home/music/collection/{}", file.to_str()?);
-    let path = Path::new(&file);
+pub fn audio_file(file: PathBuf, assets_dir: State<AssetsDir>) -> Option<NamedFile> {
+    let path = Path::new(&assets_dir.assets_dir).join(file);
     NamedFile::open(path).ok()
 }
