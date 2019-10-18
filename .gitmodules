@@ -1,0 +1,3 @@
+[submodule "cuer_manager_backend/ui"]
+	path = cuer_manager_backend/ui
+	url = git@github.com:asopicki/cuer-manager-ui.git
