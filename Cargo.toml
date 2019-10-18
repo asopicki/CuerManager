@@ -2,4 +2,5 @@
 members = [
   "cuer_database",
   "cuecard_indexer",
+  "cuer_manager_backend"
 ]
