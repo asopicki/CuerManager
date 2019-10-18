@@ -1,6 +1,8 @@
 [global]
 address = "localhost"
 assets_dir = "/home/music/collection"
+indexer_path = "target/debug/cuecard_indexer"
+cuecards_dir = "/home/alex/Round"
 
 [development]
 port = 8087
