@@ -1,0 +1,25 @@
+[package]
+name = "cuer_database"
+version = "0.6.2"
+authors = ["Alexander Sopicki <asopicki@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+serde = "*"
+serde_derive = "*"
+diesel = { version = "^1.4", features = ["sqlite"] }
+dotenv = "^0.9"
+
+[profile.dev]
+opt-level = 0
+debug = true
+lto = false
+
+incremental = true
+
+[profile.release]
+opt-level = 's'
+debug = false
+lto = true
+incremental = false
+

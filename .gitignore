@@ -1,23 +1,18 @@
 target
-.idea
-cuer_manager.iml
 .library.db
-empty.db
 
 #fronten
-ui/node_modules/
-ui/build/
-ui/coverage
-ui/.DS_Store
-ui/.env.local
-ui/.env.development.local
-ui/.env.test.local
-ui/.env.production.local
+cuer_manager_backend/ui/node_modules/
+cuer_manager_backend/ui/build/
+cuer_manager_backend/ui/coverage
+cuer_manager_backend/ui/.DS_Store
+cuer_manager_backend/ui/.env.local
+cuer_manager_backend/ui/.env.development.local
+cuer_manager_backend/ui/.env.test.local
+cuer_manager_backend/ui/.env.production.local
 
-ui/npm-debug.log*
-ui/yarn-debug.log*
-ui/yarn-error.log*
-
+cuer_manager_backend/ui/npm-debug.log*
+cuer_manager_backend/ui/yarn-debug.log*
+cuer_manager_backend/ui/yarn-error.log*
 
 public/*
-CuerManager.iml
