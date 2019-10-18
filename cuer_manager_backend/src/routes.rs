@@ -18,6 +18,8 @@ use rocket::State;
 
 use chrono::prelude::*;
 
+use duct::cmd;
+
 use super::DbConn;
 use diesel::QueryResult;
 
@@ -487,12 +489,27 @@ pub fn static_files(file: PathBuf) -> Option<NamedFile> {
     NamedFile::open(path).ok()
 }
 
-pub struct AssetsDir {
-    pub assets_dir: String,
+pub struct BackendConfig {
+    pub music_files_dir: String,
+    pub indexer_path: String,
+    pub cuecards_lib_dir: String,
+    pub db_url: String
 }
 
 #[get("/v2/audio/<file..>")]
-pub fn audio_file(file: PathBuf, assets_dir: State<AssetsDir>) -> Option<NamedFile> {
-    let path = Path::new(&assets_dir.assets_dir).join(file);
+pub fn audio_file(file: PathBuf, config: State<BackendConfig>) -> Option<NamedFile> {
+    let path = Path::new(&config.music_files_dir).join(file);
     NamedFile::open(path).ok()
+}
+
+#[post("/v2/cuecards/refresh")]
+pub fn refresh_cuecards_library(config: State<BackendConfig>) -> Result<(), Status> {
+
+    let cmd = cmd!(String::from(&config.indexer_path), "--database", String::from(&config.db_url), String::from(&config.cuecards_lib_dir))
+        .env("DATABASE_URL", String::from(&config.db_url));
+
+    match cmd.run() {
+        Ok(_) => Ok(()),
+        Err(_) => Err(Status::BadRequest)
+    }
 }

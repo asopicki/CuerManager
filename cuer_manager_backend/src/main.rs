@@ -17,6 +17,8 @@ extern crate serde_json;
 extern crate unescape;
 extern crate uuid as uuidcrate;
 
+extern crate duct;
+
 #[cfg(test)]
 mod tests;
 
@@ -28,7 +30,7 @@ mod routes;
 use rocket_contrib::databases::diesel;
 use rocket::fairing::AdHoc;
 
-use routes::AssetsDir;
+use routes::BackendConfig;
 
 #[database("sqlite_db")]
 pub struct DbConn(diesel::SqliteConnection);
@@ -45,6 +47,7 @@ fn rocket() -> rocket::Rocket {
             routes::search_cuecards,
             routes::get_cuecard_by_uuid,
             routes::cuecard_content_by_uuid,
+            routes::refresh_cuecards_library,
             routes::favicon,
             routes::get_playlists,
             routes::create_playlist,
@@ -67,13 +70,32 @@ fn rocket() -> rocket::Rocket {
             routes::set_marks
         ],
     )
-    .attach(AdHoc::on_attach("Assets Config", |rocket| {
-            let assets_dir = rocket.config()
-                .get_str("assets_dir")
-                .unwrap_or("/home/music/collection")
+    .attach(AdHoc::on_attach("Backend Config", |rocket| {
+            let music_files_dir = rocket.config()
+                .get_str("music_files_dir")
+                .unwrap_or("music_files")
                 .to_string();
 
-            Ok(rocket.manage(AssetsDir { assets_dir: assets_dir }))
+            let cuecards_lib_dir = rocket.config()
+                .get_str("cuecards_lib_dir")
+                .unwrap_or("cuecards")
+                .to_string();
+
+            let indexer_path = rocket.config()
+                .get_str("indexer_path")
+                .unwrap_or("cuecard_indexer")
+                .to_string();
+
+            let db_url = rocket.config()
+                .get_str("library_db")
+                .unwrap_or("library.db")
+                .to_string();
+
+            Ok(rocket.manage(BackendConfig { 
+                music_files_dir: music_files_dir,
+                cuecards_lib_dir: cuecards_lib_dir,
+                indexer_path: indexer_path,
+                db_url: db_url }))
     }))
 }
 

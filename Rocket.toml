@@ -1,12 +1,13 @@
 [global]
 address = "localhost"
-assets_dir = "/home/music/collection"
+music_files_dir = "/home/music/collection"
 indexer_path = "target/debug/cuecard_indexer"
-cuecards_dir = "/home/alex/Round"
+cuecards_lib_dir = "/home/alex/Round"
 
 [development]
 port = 8087
 log = "normal"
+library_db = "/home/alex/.library.db"
 
 [development.databases]
 sqlite_db = { url = "/home/alex/.library.db", pool_size = 1}
@@ -14,6 +15,9 @@ sqlite_db = { url = "/home/alex/.library.db", pool_size = 1}
 [staging]
 port = 8086
 log = "normal"
+
+[production]
+library_db = "/home/alex/.local/share/library.db"
 
 [production.databases]
 sqlite_db = { url = "/home/alex/.local/share/library.db", pool_size = 1 }

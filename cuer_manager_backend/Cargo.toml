@@ -21,6 +21,7 @@ r2d2 = "0.8.2"
 uuid = { version = "^0.7", features = ["v4"] }
 cuer_database = { path="../cuer_database" }
 dirs = "^2.0"
+duct = "0.13"
 
 [dependencies.rocket_contrib]
 version = "0.4.2"
