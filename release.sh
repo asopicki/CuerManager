@@ -37,3 +37,5 @@ cp -r public target/release/
 cd target
 tar --transform "s,release,cuer_manager-$VERSION," -czf "cuer_manager-$VERSION.tar.gz" release/cuecard_indexer release/cuer_manager release/public
 
+cd ../
+git checkout master

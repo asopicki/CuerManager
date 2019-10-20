@@ -20,6 +20,8 @@ use chrono::prelude::*;
 
 use duct::cmd;
 
+use base64::decode;
+
 use super::DbConn;
 use diesel::QueryResult;
 
@@ -496,9 +498,13 @@ pub struct BackendConfig {
     pub db_url: String
 }
 
-#[get("/v2/audio/<file..>")]
-pub fn audio_file(file: PathBuf, config: State<BackendConfig>) -> Option<NamedFile> {
-    let path = Path::new(&config.music_files_dir).join(file);
+#[get("/v2/audio?<filename>")]
+pub fn audio_file(filename: &rocket::http::RawStr, config: State<BackendConfig>) -> Option<NamedFile> {
+    let file_name = String::from_utf8(decode(filename).unwrap()).unwrap();
+
+    let file_path = Path::new(&file_name);
+
+    let path = Path::new(&config.music_files_dir).join(file_path);
     NamedFile::open(path).ok()
 }
 

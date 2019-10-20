@@ -16,8 +16,8 @@ extern crate serde;
 extern crate serde_json;
 extern crate unescape;
 extern crate uuid as uuidcrate;
-
 extern crate duct;
+extern crate base64;
 
 #[cfg(test)]
 mod tests;
