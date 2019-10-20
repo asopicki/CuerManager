@@ -8,8 +8,6 @@ if [ -z ${VERSION} ]; then
 fi
 
 if [ ${VERSION} != "HEAD" ]; then
-  echo "Versioned release not supported"
-  exit 1;
   git checkout v${VERSION}
 else
   VERSION=`date -u +%s`
