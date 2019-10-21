@@ -498,13 +498,24 @@ pub struct BackendConfig {
     pub db_url: String
 }
 
-#[get("/v2/audio?<filename>")]
-pub fn audio_file(filename: &rocket::http::RawStr, config: State<BackendConfig>) -> Option<NamedFile> {
-    let file_name = String::from_utf8(decode(filename).unwrap()).unwrap();
+#[derive(Serialize, Deserialize)]
+pub struct FormFilename {
+    filename: String,
+}
+
+#[post("/v2/audio", format = "application/json", data = "<filedata>")]
+pub fn audio_file(filedata: Json<FormFilename>, config: State<BackendConfig>) -> Option<NamedFile> {
+    let filedata = filedata.into_inner();
+
+    let file_name = match String::from_utf8(decode(&filedata.filename).unwrap()) {
+        Ok(s) => s,
+        Err(_) => return None
+    };
 
     let file_path = Path::new(&file_name);
 
     let path = Path::new(&config.music_files_dir).join(file_path);
+
     NamedFile::open(path).ok()
 }
 
