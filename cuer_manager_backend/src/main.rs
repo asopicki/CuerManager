@@ -19,6 +19,9 @@ extern crate uuid as uuidcrate;
 extern crate duct;
 extern crate base64;
 
+#[macro_use]
+extern crate diesel_migrations;
+
 #[cfg(test)]
 mod tests;
 
@@ -34,6 +37,8 @@ use routes::BackendConfig;
 
 #[database("sqlite_db")]
 pub struct DbConn(diesel::SqliteConnection);
+
+embed_migrations!("../migrations");
 
 // The URL to the database, set via the `DATABASE_URL` environment variable.
 //static DEFAULT_DATABASE_URL: &'static str = ".local/share/library.db";
@@ -67,7 +72,9 @@ fn rocket() -> rocket::Rocket {
             routes::remove_tip_cuecard,
             routes::catchall,
             routes::audio_file,
-            routes::set_marks
+            routes::set_marks,
+            routes::check_migrations,
+            routes::run_migrations
         ],
     )
     .attach(AdHoc::on_attach("Backend Config", |rocket| {

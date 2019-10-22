@@ -25,6 +25,8 @@ use base64::decode;
 use super::DbConn;
 use diesel::QueryResult;
 
+use diesel_migrations::{any_pending_migrations, run_pending_migrations};
+
 #[derive(Deserialize)]
 pub struct FormPlaylist {
     name: String,
@@ -527,6 +529,23 @@ pub fn refresh_cuecards_library(config: State<BackendConfig>) -> Result<(), Stat
 
     match cmd.run() {
         Ok(_) => Ok(()),
+        Err(_) => Err(Status::BadRequest)
+    }
+}
+
+#[post("/v2/migrations/run")]
+pub fn run_migrations(conn: DbConn) -> Result<Json<bool>, Status> {
+    match run_pending_migrations(&conn.0) {
+        Ok(()) => Ok(Json(true)),
+        Err(_) => Err(Status::BadRequest)
+    }
+}
+
+#[get("/v2/migrations/check")]
+pub fn check_migrations(conn: DbConn) -> Result<Json<bool>, Status> {
+
+    match any_pending_migrations(&conn.0) {
+        Ok(result) => Ok(Json(result)),
         Err(_) => Err(Status::BadRequest)
     }
 }
