@@ -49,6 +49,7 @@ fn rocket() -> rocket::Rocket {
         routes![
             routes::index,
             routes::static_files,
+            routes::get_all_cuecards,
             routes::search_cuecards,
             routes::get_cuecard_by_uuid,
             routes::cuecard_content_by_uuid,
@@ -74,7 +75,9 @@ fn rocket() -> rocket::Rocket {
             routes::audio_file,
             routes::set_marks,
             routes::check_migrations,
-            routes::run_migrations
+            routes::run_migrations,
+            routes::get_all_tags,
+            routes::get_tags
         ],
     )
     .attach(AdHoc::on_attach("Backend Config", |rocket| {

@@ -2,7 +2,7 @@ use comrak::{markdown_to_html, ComrakOptions};
 use crate::cuecards;
 use cuer_database;
 use cuer_database::models::{Cuecard, Playlist, PlaylistData};
-use cuer_database::models::{Event, EventData, Program, ProgramData, Tip, TipCuecardData, TipData}; //TipCuecard};
+use cuer_database::models::{Event, EventData, Program, ProgramData, Tip, TipCuecardData, TipData, Tag};
 use crate::playlists;
 use crate::programming;
 use uuidcrate::Uuid;
@@ -203,6 +203,14 @@ pub fn set_marks(uuid: String, marks: Json<FormCuecardMarks>, conn: DbConn) -> R
         Err(_) => return Err(Status::BadRequest)
     }
 }
+
+#[get("/v2/cuecards")]
+pub fn get_all_cuecards(conn: DbConn) -> Result<Json<Vec<Cuecard>>, Status> {
+    match cuecards::get_all(&conn) {
+        Ok(result) => Ok(Json(result)),
+        Err(_) => Err(Status::BadRequest)
+    }
+} 
 
 #[get("/v2/search/<query>")]
 pub fn search_cuecards(query: String, conn: DbConn) -> QueryResult<Json<Vec<Cuecard>>> {
@@ -547,5 +555,26 @@ pub fn check_migrations(conn: DbConn) -> Result<Json<bool>, Status> {
     match any_pending_migrations(&conn.0) {
         Ok(result) => Ok(Json(result)),
         Err(_) => Err(Status::BadRequest)
+    }
+}
+
+#[get("/v2/tags")]
+pub fn get_all_tags(conn: DbConn) -> Result<Json<Vec<Tag>>, Status> {
+    match cuecards::get_all_tags(&conn) {
+        Ok(tags) => Ok(Json(tags)),
+        Err(_) => Err(Status::BadRequest)
+    }
+}
+
+#[get("/v2/cuecards/<uuid>/tags")]
+pub fn get_tags(uuid: String, conn: DbConn) -> Result<Json<Vec<Tag>>, Status> {
+    let cuecard = match cuer_database::cuecard_by_uuid(&uuid, &conn) {
+        Ok(cuecard) => cuecard,
+        Err(_) => return Err(Status::NotFound),
+    };
+
+    match cuecards::get_tags(&cuecard, &conn) {
+        Ok(tags) => Ok(Json(tags)),
+        Err(_) => Err(Status::NotFound)
     }
 }

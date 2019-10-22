@@ -1,8 +1,30 @@
 use cuer_database;
-use cuer_database::models::Cuecard;
+use cuer_database::models::{Cuecard, Tag};
 use diesel::prelude::*;
 
 use super::DbConn;
+
+type DBConnection = SqliteConnection;
+
+pub fn get_all_tags(conn: &DBConnection) -> QueryResult<Vec<Tag>> {
+    use cuer_database::schema::tags::dsl::*;
+
+    tags.load(conn)
+}
+
+pub fn get_tags(cuecard: &Cuecard, conn: &DBConnection) -> QueryResult<Vec<Tag>> {
+    cuer_database::schema::cuecard_tags::table
+        .inner_join(cuer_database::schema::tags::table)
+        .filter(cuer_database::schema::cuecard_tags::columns::cuecard_id.eq(cuecard.id))
+        .select(cuer_database::schema::tags::all_columns)
+        .load(conn)
+}
+
+pub fn get_all(conn: &DBConnection) -> QueryResult<Vec<Cuecard>> {
+     use cuer_database::schema::cuecards::dsl::*;
+
+     cuecards.load(conn)
+}
 
 pub fn search_cuecards(query: &str, conn: &DbConn) -> QueryResult<Vec<Cuecard>> {
     let has_search_prefix = query.contains(':');
@@ -26,19 +48,19 @@ pub fn get_cuesheet_content(u: &str, conn: &DbConn) -> QueryResult<Cuecard> {
     cuer_database::cuecard_by_uuid(u, conn)
 }
 
-fn cuecards_by_phase(p: &str, conn: &SqliteConnection) -> QueryResult<Vec<Cuecard>> {
+fn cuecards_by_phase(p: &str, conn: &DBConnection) -> QueryResult<Vec<Cuecard>> {
     use cuer_database::schema::cuecards::dsl::*;
 
     cuecards.filter(phase.eq(p)).get_results(conn)
 }
 
-fn cuecards_by_rhythm(r: &str, conn: &SqliteConnection) -> QueryResult<Vec<Cuecard>> {
+fn cuecards_by_rhythm(r: &str, conn: &DBConnection) -> QueryResult<Vec<Cuecard>> {
     use cuer_database::schema::cuecards::dsl::*;
 
     cuecards.filter(rhythm.eq(r)).get_results(conn)
 }
 
-fn cuecards_meta_search(q: &str, conn: &SqliteConnection) -> QueryResult<Vec<Cuecard>> {
+fn cuecards_meta_search(q: &str, conn: &DBConnection) -> QueryResult<Vec<Cuecard>> {
     use cuer_database::schema::*;
 
     let ids = cardindex::table
@@ -53,7 +75,7 @@ fn cuecards_meta_search(q: &str, conn: &SqliteConnection) -> QueryResult<Vec<Cue
         .load::<Cuecard>(conn)
 }
 
-fn cuecards_content_search(q: &str, conn: &SqliteConnection) -> QueryResult<Vec<Cuecard>> {
+fn cuecards_content_search(q: &str, conn: &DBConnection) -> QueryResult<Vec<Cuecard>> {
     use cuer_database::schema::*;
 
     let ids = cardindex::table

@@ -6,6 +6,7 @@ use super::schema::playlists;
 use super::schema::programs;
 use super::schema::tip_cuecards;
 use super::schema::tips;
+use super::schema::tags;
 pub use diesel::prelude::*;
 use diesel::{
     delete, insert_into, update, ExpressionMethods, QueryResult, RunQueryDsl, SqliteConnection,
@@ -329,5 +330,33 @@ impl<'a> TipCuecardData<'a> {
 
         delete(tip_cuecards.filter(tip_id.eq(self.tip_id).and(cuecard_id.eq(self.cuecard_id))))
             .execute(conn)
+    }
+}
+
+#[derive(Clone, Queryable, Identifiable, QueryableByName, Debug, Serialize, Deserialize)]
+#[table_name = "tags"]
+pub struct Tag {
+    pub id: i32,
+    pub tag: String
+}
+
+#[derive(Insertable, AsChangeset, Debug)]
+#[table_name = "tags"]
+pub struct TagData<'a> {
+    pub tag: &'a str,
+}
+
+impl<'a> TagData<'a> {
+    pub fn delete(&self, conn: &SqliteConnection) -> QueryResult<usize> {
+        use crate::schema::tags::dsl::*;
+        delete(tags).filter(tag.eq(self.tag)).execute(conn)
+    }
+
+    pub fn create(&self, conn: &SqliteConnection) -> QueryResult<Tag> {
+        use crate::schema::tags::dsl::*;
+
+        insert_into(tags).values(self).execute(conn).unwrap();
+
+        tags.filter(tag.eq(self.tag)).get_result(conn)
     }
 }

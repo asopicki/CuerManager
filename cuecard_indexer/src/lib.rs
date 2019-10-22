@@ -72,7 +72,8 @@ fn process(entry: DirEntry) -> IndexFile {
 		static ref TITLE_PATTERN: Regex = Regex::new(r"^#\s+(?P<title>.*)$").unwrap();
 		static ref META_PATTERN: Regex = Regex::new(r"^[\*]\s+[\*][\*](?P<metaname>\w+)[\*][\*]:\s+(?P<metatext>.*)$").unwrap();
 		static ref PHASE_PATTERN: Regex = Regex::new(r"^(I|II|III|IV|V|VI)\s*(\+.*)?$").unwrap();
-		static ref AUDIO_FILE_PATTERN: Regex = Regex::new("^<meta\\s+name=\"x:audio-file\"\\s+content=\"(?P<filename>.*)\">").unwrap();
+		static ref AUDIO_FILE_PATTERN: Regex = Regex::new("^<meta\\s+name=\"x:audio-file\"\\s+content=\"(?P<filename>.*)\"\\s*>").unwrap();
+		static ref MAIL_PATTERN: Regex = Regex::new(r"\[(?P<name>.+)\]\(mailto.*\)").unwrap();
 	}
 
 	let filename = entry.path().to_str().unwrap().to_owned();
@@ -96,7 +97,16 @@ fn process(entry: DirEntry) -> IndexFile {
 		match result {
 			Some(caps) => {
 				let key = caps.name("metaname").unwrap().as_str();
-				index_file.set_meta(&key.to_lowercase(), caps.name("metatext").unwrap().as_str());
+				let mut text = caps.name("metatext").unwrap().as_str();
+
+				if MAIL_PATTERN.is_match(text) {
+					//info!("Mail detected. Extracting name.");
+					let mail_caps = MAIL_PATTERN.captures(text).unwrap();
+					text = mail_caps.name("name").unwrap().as_str();
+					//info!("Name extracted: {:?}", text);
+				}
+
+				index_file.set_meta(&key.to_lowercase(), text);
 			},
 			_ => ()
 		}
