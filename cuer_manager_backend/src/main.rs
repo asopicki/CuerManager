@@ -112,7 +112,7 @@ fn rocket() -> rocket::Rocket {
 }
 
 fn main() {
-    embed_migrations!("../migrations");
+    embed_migrations!();
 
     rocket().launch();
 }
