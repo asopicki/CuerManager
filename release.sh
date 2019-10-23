@@ -33,9 +33,10 @@ if [ -d target/release/public ]; then
 fi
 
 cp -r public target/release/
+cp -r migrations target/release
 
 cd target
-tar --transform "s,release,cuer_manager-$VERSION," -czf "cuer_manager-$VERSION.tar.gz" release/cuecard_indexer release/cuer_manager release/public
+tar --transform "s,release,cuer_manager-$VERSION," -czf "cuer_manager-$VERSION.tar.gz" release/cuecard_indexer release/cuer_manager release/public release/migrations
 
 cd ../
 git checkout master
