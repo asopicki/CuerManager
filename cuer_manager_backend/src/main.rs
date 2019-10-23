@@ -38,6 +38,8 @@ use routes::BackendConfig;
 #[database("sqlite_db")]
 pub struct DbConn(diesel::SqliteConnection);
 
+embed_migrations!("../migrations");
+
 // The URL to the database, set via the `DATABASE_URL` environment variable.
 //static DEFAULT_DATABASE_URL: &'static str = ".local/share/library.db";
 
@@ -112,7 +114,5 @@ fn rocket() -> rocket::Rocket {
 }
 
 fn main() {
-    embed_migrations!("../migrations");
-
     rocket().launch();
 }
