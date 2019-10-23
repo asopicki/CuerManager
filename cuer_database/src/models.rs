@@ -7,6 +7,7 @@ use super::schema::programs;
 use super::schema::tip_cuecards;
 use super::schema::tips;
 use super::schema::tags;
+use super::schema::cuecard_tags;
 pub use diesel::prelude::*;
 use diesel::{
     delete, insert_into, update, ExpressionMethods, QueryResult, RunQueryDsl, SqliteConnection,
@@ -235,7 +236,7 @@ pub struct Program {
 pub struct ProgramData<'a> {
     pub uuid: &'a str,
     pub notes: Option<&'a str>,
-    pub event_id: &'a i32,
+    pub event_id: i32,
     pub date_created: &'a str,
     pub date_modified: &'a str,
 }
@@ -243,7 +244,8 @@ pub struct ProgramData<'a> {
 impl<'a> ProgramData<'a> {
     pub fn update(&self, conn: &SqliteConnection) -> QueryResult<Program> {
         use crate::schema::programs::dsl::*;
-        update(programs).set(self).execute(conn).unwrap();
+        update(programs).set(self)
+            .filter(uuid.eq(self.uuid)).execute(conn).unwrap();
 
         programs.filter(uuid.eq(self.uuid)).get_result(conn)
     }
@@ -358,5 +360,37 @@ impl<'a> TagData<'a> {
         insert_into(tags).values(self).execute(conn).unwrap();
 
         tags.filter(tag.eq(self.tag)).get_result(conn)
+    }
+}
+
+#[derive(Clone, Queryable, Identifiable, QueryableByName, Debug, Serialize, Deserialize)]
+#[table_name = "cuecard_tags"]
+pub struct CuecardTag {
+    pub id: i32,
+    pub cuecard_id: i32,
+    pub tag_id: i32
+}
+
+#[derive(Insertable, AsChangeset, Debug)]
+#[table_name = "cuecard_tags"]
+pub struct CuecardTagData {
+    pub cuecard_id: i32,
+    pub tag_id: i32
+}
+
+impl CuecardTagData {
+    pub fn create(&self, conn: &SqliteConnection) -> QueryResult<usize> {
+        use crate::schema::cuecard_tags::dsl::*;
+
+        insert_into(cuecard_tags).values(self).execute(conn)
+    }
+
+    pub fn delete(&self, conn: &SqliteConnection) -> QueryResult<usize> {
+        use crate::schema::cuecard_tags::dsl::*;
+
+        delete(cuecard_tags)
+            .filter(cuecard_id.eq(self.cuecard_id))
+            .filter(tag_id.eq(self.tag_id))
+            .execute(conn)
     }
 }

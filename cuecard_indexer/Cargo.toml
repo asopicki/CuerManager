@@ -1,6 +1,6 @@
 [package]
 name = "cuecard_indexer"
-version = "0.3.4"
+version = "0.4.0"
 authors = ["Alexander Sopicki <asopicki@gmail.com>"]
 edition = "2018"
 

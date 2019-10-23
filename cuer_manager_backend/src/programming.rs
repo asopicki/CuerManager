@@ -12,7 +12,9 @@ use diesel::prelude::*;
     AddProgramError,
 }*/
 
-pub fn delete_event(uuid: &str, conn: &SqliteConnection) -> QueryResult<Event> {
+type DBConnection = SqliteConnection;
+
+pub fn delete_event(uuid: &str, conn: &DBConnection) -> QueryResult<Event> {
     let e = event_by_uuid(uuid, conn).unwrap();
 
     e.delete(conn).unwrap();
@@ -20,13 +22,13 @@ pub fn delete_event(uuid: &str, conn: &SqliteConnection) -> QueryResult<Event> {
     Ok(e)
 }
 
-pub fn event_by_uuid(entry_uuid: &str, conn: &SqliteConnection) -> QueryResult<Event> {
+pub fn event_by_uuid(entry_uuid: &str, conn: &DBConnection) -> QueryResult<Event> {
     use cuer_database::schema::events::dsl::*;
     events.filter(uuid.eq(entry_uuid)).first::<Event>(conn)
 }
 
 pub fn get_events(
-    conn: &SqliteConnection,
+    conn: &DBConnection,
     min_date: String,
     max_date: String,
 ) -> QueryResult<Vec<Event>> {
@@ -38,17 +40,23 @@ pub fn get_events(
         .load::<Event>(conn)
 }
 
-pub fn create_event(event: &EventData, conn: &SqliteConnection) -> QueryResult<Event> {
+pub fn create_event(event: &EventData, conn: &DBConnection) -> QueryResult<Event> {
     event.create(conn)
 }
 
-pub fn create_tip(tip: &TipData, conn: &SqliteConnection) -> QueryResult<Tip> {
+pub fn create_tip(tip: &TipData, conn: &DBConnection) -> QueryResult<Tip> {
     tip.create(conn)
+}
+
+pub fn get_program_by_id(program_id: i32, conn: &DBConnection) -> QueryResult<Program> {
+     use cuer_database::schema::programs::dsl::*;
+
+     programs.filter(id.eq(program_id)).first::<Program>(conn)
 }
 
 pub fn program_by_event_id(
     program_event_id: i32,
-    conn: &SqliteConnection,
+    conn: &DBConnection,
 ) -> QueryResult<Option<Program>> {
     use cuer_database::schema::programs::dsl::*;
     programs
@@ -57,7 +65,7 @@ pub fn program_by_event_id(
         .optional()
 }
 
-pub fn tips_by_program_id(tip_program_id: i32, conn: &SqliteConnection) -> QueryResult<Vec<Tip>> {
+pub fn tips_by_program_id(tip_program_id: i32, conn: &DBConnection) -> QueryResult<Vec<Tip>> {
     use cuer_database::schema::tips::dsl::*;
 
     tips.filter(program_id.eq(tip_program_id))
@@ -67,14 +75,14 @@ pub fn tips_by_program_id(tip_program_id: i32, conn: &SqliteConnection) -> Query
 
 pub fn create_tip_cuecard(
     tip_cuecard: &TipCuecardData,
-    conn: &SqliteConnection,
+    conn: &DBConnection,
 ) -> QueryResult<usize> {
     tip_cuecard.create(conn)
 }
 
 pub fn update_tip_cuecard(
     tip_cuecard: &TipCuecardData,
-    conn: &SqliteConnection,
+    conn: &DBConnection,
 ) -> QueryResult<usize> {
     use cuer_database::schema::tip_cuecards::dsl::*;
     
@@ -86,12 +94,12 @@ pub fn update_tip_cuecard(
 
 pub fn remove_tip_cuecard(
     tip_cuecard: &TipCuecardData,
-    conn: &SqliteConnection,
+    conn: &DBConnection,
 ) -> QueryResult<usize> {
     tip_cuecard.delete(conn)
 }
 
-pub fn get_tip_cuecard(t_id: i32, c_id: i32, conn: &SqliteConnection) -> QueryResult<TipCuecard> {
+pub fn get_tip_cuecard(t_id: i32, c_id: i32, conn: &DBConnection) -> QueryResult<TipCuecard> {
     use cuer_database::schema::tip_cuecards::dsl::*;
         
     tip_cuecards
@@ -100,7 +108,7 @@ pub fn get_tip_cuecard(t_id: i32, c_id: i32, conn: &SqliteConnection) -> QueryRe
         .first::<TipCuecard>(conn)
 }
 
-pub fn get_cuecards(tip: &Tip, conn: &SqliteConnection) -> QueryResult<Vec<Cuecard>> {
+pub fn get_cuecards(tip: &Tip, conn: &DBConnection) -> QueryResult<Vec<Cuecard>> {
     cuer_database::schema::tip_cuecards::table
         .inner_join(cuer_database::schema::cuecards::table)
         .filter(cuer_database::schema::tip_cuecards::columns::tip_id.eq(tip.id))
@@ -109,7 +117,7 @@ pub fn get_cuecards(tip: &Tip, conn: &SqliteConnection) -> QueryResult<Vec<Cueca
         .load::<Cuecard>(conn)
 }
 
-pub fn set_marks(c_id: i32, marks: &str, conn: &SqliteConnection) -> QueryResult<usize> {
+pub fn set_marks(c_id: i32, marks: &str, conn: &DBConnection) -> QueryResult<usize> {
     use cuer_database::schema::cuecards::dsl::*;
 
     diesel::update(cuecards.filter(id.eq(c_id)))

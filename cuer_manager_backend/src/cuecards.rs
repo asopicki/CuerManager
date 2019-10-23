@@ -1,10 +1,46 @@
 use cuer_database;
-use cuer_database::models::{Cuecard, Tag};
+use cuer_database::models::{Cuecard, Tag, TagData, CuecardTag, CuecardTagData};
 use diesel::prelude::*;
 
 use super::DbConn;
 
 type DBConnection = SqliteConnection;
+
+pub fn add_new_tag(name: &str, conn: &DBConnection) -> QueryResult<Tag> {
+    let data = TagData{tag: name};
+
+    data.create(conn)
+}
+
+pub fn tag_associated(tag: &Tag, cuecard: &Cuecard, conn: &DBConnection) -> bool {
+    use cuer_database::schema::cuecard_tags::dsl::*;
+
+    match cuecard_tags
+        .filter(cuecard_id.eq(cuecard.id))
+        .filter(tag_id.eq(tag.id))
+        .first::<CuecardTag>(conn) {
+        Ok(_) => true,
+        Err(_) => false
+    }
+}
+
+pub fn add_tag_to_cuecard(tag: &Tag, cuecard: &Cuecard, conn: &DBConnection) -> QueryResult<usize> {
+    let data = CuecardTagData{tag_id: tag.id, cuecard_id: cuecard.id};
+
+    data.create(conn)
+}
+
+pub fn remove_tag_from_cuecard(tag: &Tag, cuecard: &Cuecard, conn: &DBConnection) -> QueryResult<usize> {
+    let data = CuecardTagData{tag_id: tag.id, cuecard_id: cuecard.id};
+
+    data.delete(conn)
+}
+
+pub fn get_tag_by_name(name: &str, conn: &DBConnection) -> QueryResult<Tag> {
+    use cuer_database::schema::tags::dsl::*;
+
+    tags.filter(tag.eq(name)).first::<Tag>(conn)
+}
 
 pub fn get_all_tags(conn: &DBConnection) -> QueryResult<Vec<Tag>> {
     use cuer_database::schema::tags::dsl::*;

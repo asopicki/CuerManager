@@ -65,6 +65,8 @@ fn rocket() -> rocket::Rocket {
             routes::delete_event,
             routes::create_event,
             routes::get_program,
+            routes::get_program_notes,
+            routes::update_program_notes,
             routes::get_tips,
             routes::create_tip,
             routes::remove_tip,
@@ -77,7 +79,9 @@ fn rocket() -> rocket::Rocket {
             routes::check_migrations,
             routes::run_migrations,
             routes::get_all_tags,
-            routes::get_tags
+            routes::get_tags,
+            routes::add_tag,
+            routes::remove_tag
         ],
     )
     .attach(AdHoc::on_attach("Backend Config", |rocket| {

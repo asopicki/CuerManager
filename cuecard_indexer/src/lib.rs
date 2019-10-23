@@ -48,12 +48,12 @@ impl IndexFile {
 		return self.meta.get(&key);
 	}
 
-	fn index_file(&self, file: &IndexFile) -> Option<PathBuf>  {
+	fn index_file(&self) -> Option<PathBuf>  {
 		let mut filename = ".de.sopicki.cuelib.".to_string();
-		filename.push_str(file.path.file_name().to_str().unwrap());
+		filename.push_str(self.path.file_name().to_str().unwrap());
 		filename = filename.to_string();
 		let path = Path::new(&filename).to_owned();
-		let parent = file.path.path().parent().unwrap();
+		let parent = self.path.path().parent().unwrap();
 		return Some(parent.join(&path));
 	}
 }
@@ -174,7 +174,7 @@ fn index(connection: &SqliteConnection, file: &IndexFile) {
 	};
 	values.create(connection).unwrap();
 
-	let index_file = file.index_file(file).unwrap();
+	let index_file = file.index_file().unwrap();
 
 	std::fs::write(index_file, u.to_hyphenated().to_string()).unwrap();
 }
@@ -185,13 +185,13 @@ fn update(connection: &SqliteConnection, file: &IndexFile) {
 	let unknown = "unknown".to_string();
 	let empty = "".to_string();
 
-	let indexfile = file.index_file(file).unwrap();
+	let indexfile = file.index_file().unwrap();
 	let fileuuid = std::fs::read_to_string(indexfile).unwrap();
 
 	let result = cuecards.filter(uuid.eq(fileuuid.clone())).load::<Cuecard>(connection).unwrap_or(Vec::new());
 
 	if result.is_empty() {
-		error!("Index file found but no related cuecard in the database. Remove stale indexfile {:?} and reindex", file.index_file(file).unwrap());
+		error!("Index file found but no related cuecard in the database. Remove stale indexfile {:?} and reindex", file.index_file().unwrap());
 		return;
 	}
 
@@ -212,7 +212,7 @@ fn update(connection: &SqliteConnection, file: &IndexFile) {
 	};
 
 	values.update(cuecard, connection).unwrap();
-	let indexfile = file.index_file(file).unwrap();
+	let indexfile = file.index_file().unwrap();
 	let filetime = FileTime::from_system_time(SystemTime::now());
 	set_file_mtime(indexfile, filetime).unwrap();
 }
@@ -228,7 +228,7 @@ enum IndexAction {
 
 fn should_index(connection: &SqliteConnection, file: &IndexFile) -> IndexAction {
 	use self::schema::cuecards::dsl::*;
-	let indexfile = file.index_file(file).unwrap();
+	let indexfile = file.index_file().unwrap();
 
 	if indexfile.exists() {
 		debug!("Found existing index file {:?}", indexfile);
@@ -241,8 +241,21 @@ fn should_index(connection: &SqliteConnection, file: &IndexFile) -> IndexAction 
 			let fileuuid = std::fs::read_to_string(indexfile).unwrap();
 			let result = cuecards.filter(uuid.eq(fileuuid.clone())).load::<Cuecard>(connection).unwrap();
 			if result.is_empty() {
-				debug!("UUID {} not found in database. Will reindex the file {:?}.", fileuuid, file.path);
-				return IndexAction::Index;
+				debug!("UUID {} not found in database. Will retry searching by title.", fileuuid);
+
+				let result = cuecards.filter(title.eq(file.get_meta("title".to_string()).unwrap_or(&"".to_string())))
+					.load::<Cuecard>(connection).unwrap();
+
+				if result.is_empty() {
+					return IndexAction::Index;
+				}
+				
+				let cuecard = result.get(0).unwrap();
+				let index_file = file.index_file().unwrap();
+				info!("Cuecard found by title. Updating index file with UUID {} from the database", &cuecard.uuid);
+				std::fs::write(index_file, &cuecard.uuid ).unwrap();
+
+				return IndexAction::Update;
 			}
 		}
 
