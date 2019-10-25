@@ -1,11 +1,13 @@
-use comrak::{markdown_to_html, ComrakOptions};
 use crate::cuecards;
-use cuer_database;
-use cuer_database::models::{Cuecard};
-use cuer_database::models::{Event, EventData, Program, ProgramData, Tip, TipCuecardData, TipData, Tag};
-use crate::programming;
-use uuidcrate::Uuid;
 use crate::guards::BackendConfig;
+use crate::programming;
+use comrak::{markdown_to_html, ComrakOptions};
+use cuer_database;
+use cuer_database::models::Cuecard;
+use cuer_database::models::{
+    Event, EventData, Program, ProgramData, Tag, Tip, TipCuecardData, TipData,
+};
+use uuidcrate::Uuid;
 
 use std::convert::From;
 use std::io;
@@ -13,8 +15,8 @@ use std::path::{Path, PathBuf};
 
 use rocket::http::Status;
 use rocket::response::{content, NamedFile};
-use rocket_contrib::json::Json;
 use rocket::State;
+use rocket_contrib::json::Json;
 
 use chrono::prelude::*;
 
@@ -80,18 +82,18 @@ pub struct FormTipCuecard {
 
 #[derive(Serialize, Deserialize)]
 pub struct FormCuecardMarks {
-    karaoke_marks: String
+    karaoke_marks: String,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct FormTag {
-    tag: String
+    tag: String,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct FormNotes {
     notes: String,
-    date_modified: String
+    date_modified: String,
 }
 
 #[get("/v2/cuecards/<uuid>/content")]
@@ -122,11 +124,15 @@ pub fn cuecard_content_by_uuid(
 pub fn get_cuecard_by_uuid(uuid: String, conn: DbConn) -> Result<Json<Cuecard>, Status> {
     match cuer_database::cuecard_by_uuid(&uuid, &conn) {
         Ok(cuecard) => Ok(Json(cuecard)),
-        Err(_) => Err(Status::NotFound)
+        Err(_) => Err(Status::NotFound),
     }
 }
 
-#[post("/v2/cuecards/<uuid>/marks", format = "application/json", data = "<marks>")]
+#[post(
+    "/v2/cuecards/<uuid>/marks",
+    format = "application/json",
+    data = "<marks>"
+)]
 pub fn set_marks(uuid: String, marks: Json<FormCuecardMarks>, conn: DbConn) -> Result<(), Status> {
     let data = marks.into_inner();
 
@@ -137,7 +143,7 @@ pub fn set_marks(uuid: String, marks: Json<FormCuecardMarks>, conn: DbConn) -> R
 
     match programming::set_marks(cuecard.id, &data.karaoke_marks, &conn) {
         Ok(_) => Ok(()),
-        Err(_) => Err(Status::BadRequest)
+        Err(_) => Err(Status::BadRequest),
     }
 }
 
@@ -145,9 +151,9 @@ pub fn set_marks(uuid: String, marks: Json<FormCuecardMarks>, conn: DbConn) -> R
 pub fn get_all_cuecards(conn: DbConn) -> Result<Json<Vec<Cuecard>>, Status> {
     match cuecards::get_all(&conn) {
         Ok(result) => Ok(Json(result)),
-        Err(_) => Err(Status::BadRequest)
+        Err(_) => Err(Status::BadRequest),
     }
-} 
+}
 
 #[get("/v2/search/<query>")]
 pub fn search_cuecards(query: String, conn: DbConn) -> QueryResult<Json<Vec<Cuecard>>> {
@@ -265,18 +271,24 @@ pub fn get_program(event_id: i32, conn: DbConn) -> Result<Json<Option<Program>>,
 #[get("/v2/event/<event_id>/program/notes")]
 pub fn get_program_notes(event_id: i32, conn: DbConn) -> Result<String, Status> {
     match programming::program_by_event_id(event_id, &conn) {
-        Ok(p) => {
-            match p {
-                Some(p) => Ok(p.notes.unwrap_or_else(|| "".to_owned())),
-                None => Ok("".to_owned())
-            }
+        Ok(p) => match p {
+            Some(p) => Ok(p.notes.unwrap_or_else(|| "".to_owned())),
+            None => Ok("".to_owned()),
         },
-        Err(_) => Err(Status::NotFound)
+        Err(_) => Err(Status::NotFound),
     }
 }
 
-#[post("/v2/program/<program_id>/notes", format="application/json", data="<notes>")]
-pub fn update_program_notes(program_id: i32, notes: Json<FormNotes>, conn: DbConn) -> Result<String, Status> {
+#[post(
+    "/v2/program/<program_id>/notes",
+    format = "application/json",
+    data = "<notes>"
+)]
+pub fn update_program_notes(
+    program_id: i32,
+    notes: Json<FormNotes>,
+    conn: DbConn,
+) -> Result<String, Status> {
     let program = programming::get_program_by_id(program_id, &conn);
 
     let data = notes.into_inner();
@@ -298,11 +310,11 @@ pub fn update_program_notes(program_id: i32, notes: Json<FormNotes>, conn: DbCon
                         ..ComrakOptions::default()
                     };
                     Ok(markdown_to_html(&data.notes.as_str(), &options))
-                },
-                Err(_) => Err(Status::BadRequest)
+                }
+                Err(_) => Err(Status::BadRequest),
             }
-        },
-        Err(_) => Err(Status::NotFound)
+        }
+        Err(_) => Err(Status::NotFound),
     }
 }
 
@@ -380,7 +392,7 @@ pub fn create_tip_cuecard(
     let tip_cuecard_data = TipCuecardData {
         tip_id: &tip.id,
         cuecard_id: &cuecard.id,
-        sort_order: &data.sort_order
+        sort_order: &data.sort_order,
     };
 
     let result = programming::create_tip_cuecard(&tip_cuecard_data, &conn);
@@ -411,7 +423,7 @@ pub fn update_tip_cuecard(
     let tip_cuecard_data = TipCuecardData {
         tip_id: &tip.id,
         cuecard_id: &cuecard.id,
-        sort_order: &data.sort_order
+        sort_order: &data.sort_order,
     };
 
     let result = programming::update_tip_cuecard(&tip_cuecard_data, &conn);
@@ -449,7 +461,7 @@ pub fn remove_tip_cuecard(
     let tip_cuecard_data = TipCuecardData {
         tip_id: &tip_cuecard.tip_id,
         cuecard_id: &tip_cuecard.cuecard_id,
-        sort_order: &tip_cuecard.sort_order
+        sort_order: &tip_cuecard.sort_order,
     };
 
     let result = programming::remove_tip_cuecard(&tip_cuecard_data, &conn);
@@ -471,7 +483,7 @@ pub fn index() -> io::Result<NamedFile> {
 }
 
 #[allow(unused_variables)]
-#[get("/<something..>", rank=2)]
+#[get("/<something..>", rank = 2)]
 pub fn catchall(something: PathBuf) -> io::Result<NamedFile> {
     NamedFile::open("public/index.html")
 }
@@ -493,7 +505,7 @@ pub fn audio_file(filedata: Json<FormFilename>, config: State<BackendConfig>) ->
 
     let file_name = match String::from_utf8(decode(&filedata.filename).unwrap()) {
         Ok(s) => s,
-        Err(_) => return None
+        Err(_) => return None,
     };
 
     let file_path = Path::new(&file_name);
@@ -505,13 +517,17 @@ pub fn audio_file(filedata: Json<FormFilename>, config: State<BackendConfig>) ->
 
 #[post("/v2/cuecards/refresh")]
 pub fn refresh_cuecards_library(config: State<BackendConfig>) -> Result<(), Status> {
-
-    let cmd = cmd!(String::from(&config.indexer_path), "--database", String::from(&config.db_url), String::from(&config.cuecards_lib_dir))
-        .env("DATABASE_URL", String::from(&config.db_url));
+    let cmd = cmd!(
+        String::from(&config.indexer_path),
+        "--database",
+        String::from(&config.db_url),
+        String::from(&config.cuecards_lib_dir)
+    )
+    .env("DATABASE_URL", String::from(&config.db_url));
 
     match cmd.run() {
         Ok(_) => Ok(()),
-        Err(_) => Err(Status::BadRequest)
+        Err(_) => Err(Status::BadRequest),
     }
 }
 
@@ -519,16 +535,15 @@ pub fn refresh_cuecards_library(config: State<BackendConfig>) -> Result<(), Stat
 pub fn run_migrations(conn: DbConn) -> Result<Json<bool>, Status> {
     match run_pending_migrations(&conn.0) {
         Ok(()) => Ok(Json(true)),
-        Err(_) => Err(Status::BadRequest)
+        Err(_) => Err(Status::BadRequest),
     }
 }
 
 #[get("/v2/migrations/check")]
 pub fn check_migrations(conn: DbConn) -> Result<Json<bool>, Status> {
-
     match any_pending_migrations(&conn.0) {
         Ok(result) => Ok(Json(result)),
-        Err(_) => Err(Status::BadRequest)
+        Err(_) => Err(Status::BadRequest),
     }
 }
 
@@ -536,7 +551,7 @@ pub fn check_migrations(conn: DbConn) -> Result<Json<bool>, Status> {
 pub fn get_all_tags(conn: DbConn) -> Result<Json<Vec<Tag>>, Status> {
     match cuecards::get_all_tags(&conn) {
         Ok(tags) => Ok(Json(tags)),
-        Err(_) => Err(Status::BadRequest)
+        Err(_) => Err(Status::BadRequest),
     }
 }
 
@@ -549,15 +564,19 @@ pub fn get_tags(uuid: String, conn: DbConn) -> Result<Json<Vec<Tag>>, Status> {
 
     match cuecards::get_tags(&cuecard, &conn) {
         Ok(tags) => Ok(Json(tags)),
-        Err(_) => Err(Status::NotFound)
+        Err(_) => Err(Status::NotFound),
     }
 }
 
-#[post("/v2/cuecards/<uuid>/tags", format="application/json", data="<tagdata>")]
+#[post(
+    "/v2/cuecards/<uuid>/tags",
+    format = "application/json",
+    data = "<tagdata>"
+)]
 pub fn add_tag(uuid: String, tagdata: Json<FormTag>, conn: DbConn) -> Result<(), Status> {
     let cuecard = match cuer_database::cuecard_by_uuid(&uuid, &conn) {
         Ok(cuecard) => cuecard,
-        Err(_) => return Err(Status::NotFound)
+        Err(_) => return Err(Status::NotFound),
     };
 
     let data = tagdata.into_inner();
@@ -567,21 +586,19 @@ pub fn add_tag(uuid: String, tagdata: Json<FormTag>, conn: DbConn) -> Result<(),
             if !cuecards::tag_associated(&tag, &cuecard, &conn) {
                 match cuecards::add_tag_to_cuecard(&tag, &cuecard, &conn) {
                     Ok(_) => return Ok(()),
-                    Err(_) => return Err(Status::BadRequest)
+                    Err(_) => return Err(Status::BadRequest),
                 }
             }
-        },
+        }
         Err(_) => {
             let result = cuecards::add_new_tag(&data.tag, &conn);
 
             match result {
-                Ok(new_tag) => {
-                    match cuecards::add_tag_to_cuecard(&new_tag, &cuecard, &conn) {
-                       Ok(_) => return Ok(()),
-                        Err(_) => return Err(Status::BadRequest)
-                    }
+                Ok(new_tag) => match cuecards::add_tag_to_cuecard(&new_tag, &cuecard, &conn) {
+                    Ok(_) => return Ok(()),
+                    Err(_) => return Err(Status::BadRequest),
                 },
-                Err(_) => return Err(Status::BadRequest)
+                Err(_) => return Err(Status::BadRequest),
             }
         }
     }
@@ -591,9 +608,9 @@ pub fn add_tag(uuid: String, tagdata: Json<FormTag>, conn: DbConn) -> Result<(),
 
 #[delete("/v2/cuecards/<uuid>/tag/<tag>")]
 pub fn remove_tag(uuid: String, tag: String, conn: DbConn) -> Result<(), Status> {
-     let cuecard = match cuer_database::cuecard_by_uuid(&uuid, &conn) {
+    let cuecard = match cuer_database::cuecard_by_uuid(&uuid, &conn) {
         Ok(cuecard) => cuecard,
-        Err(_) => return Err(Status::NotFound)
+        Err(_) => return Err(Status::NotFound),
     };
 
     match cuecards::get_tag_by_name(&tag, &conn) {
@@ -601,12 +618,12 @@ pub fn remove_tag(uuid: String, tag: String, conn: DbConn) -> Result<(), Status>
             if cuecards::tag_associated(&tag, &cuecard, &conn) {
                 match cuecards::remove_tag_from_cuecard(&tag, &cuecard, &conn) {
                     Ok(_) => Ok(()),
-                    Err(_) => Err(Status::BadRequest)
+                    Err(_) => Err(Status::BadRequest),
                 }
             } else {
                 Ok(())
             }
-        },
-        Err(_) => Err(Status::BadRequest)
-     }
+        }
+        Err(_) => Err(Status::BadRequest),
+    }
 }

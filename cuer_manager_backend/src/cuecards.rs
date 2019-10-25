@@ -1,5 +1,5 @@
 use cuer_database;
-use cuer_database::models::{Cuecard, Tag, TagData, CuecardTag, CuecardTagData};
+use cuer_database::models::{Cuecard, CuecardTag, CuecardTagData, Tag, TagData};
 use diesel::prelude::*;
 
 use super::DbConn;
@@ -7,7 +7,7 @@ use super::DbConn;
 type DBConnection = SqliteConnection;
 
 pub fn add_new_tag(name: &str, conn: &DBConnection) -> QueryResult<Tag> {
-    let data = TagData{tag: name};
+    let data = TagData { tag: name };
 
     data.create(conn)
 }
@@ -18,17 +18,28 @@ pub fn tag_associated(tag: &Tag, cuecard: &Cuecard, conn: &DBConnection) -> bool
     cuecard_tags
         .filter(cuecard_id.eq(cuecard.id))
         .filter(tag_id.eq(tag.id))
-        .first::<CuecardTag>(conn).is_ok()
+        .first::<CuecardTag>(conn)
+        .is_ok()
 }
 
 pub fn add_tag_to_cuecard(tag: &Tag, cuecard: &Cuecard, conn: &DBConnection) -> QueryResult<usize> {
-    let data = CuecardTagData{tag_id: tag.id, cuecard_id: cuecard.id};
+    let data = CuecardTagData {
+        tag_id: tag.id,
+        cuecard_id: cuecard.id,
+    };
 
     data.create(conn)
 }
 
-pub fn remove_tag_from_cuecard(tag: &Tag, cuecard: &Cuecard, conn: &DBConnection) -> QueryResult<usize> {
-    let data = CuecardTagData{tag_id: tag.id, cuecard_id: cuecard.id};
+pub fn remove_tag_from_cuecard(
+    tag: &Tag,
+    cuecard: &Cuecard,
+    conn: &DBConnection,
+) -> QueryResult<usize> {
+    let data = CuecardTagData {
+        tag_id: tag.id,
+        cuecard_id: cuecard.id,
+    };
 
     data.delete(conn)
 }
@@ -54,9 +65,9 @@ pub fn get_tags(cuecard: &Cuecard, conn: &DBConnection) -> QueryResult<Vec<Tag>>
 }
 
 pub fn get_all(conn: &DBConnection) -> QueryResult<Vec<Cuecard>> {
-     use cuer_database::schema::cuecards::dsl::*;
+    use cuer_database::schema::cuecards::dsl::*;
 
-     cuecards.load(conn)
+    cuecards.load(conn)
 }
 
 pub fn search_cuecards(query: &str, conn: &DbConn) -> QueryResult<Vec<Cuecard>> {
