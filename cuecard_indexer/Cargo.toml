@@ -1,6 +1,6 @@
 [package]
 name = "cuecard_indexer"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Alexander Sopicki <asopicki@gmail.com>"]
 edition = "2018"
 
@@ -15,7 +15,4 @@ filetime = "^0.2"
 log = "^0.4"
 env_logger = "0.7"
 cuer_database = { path="../cuer_database" }
-
-[dependencies.clap]
-features = ["yaml"]
-version = "^2.31.1"
+structopt = { version = "0.3", default-features = false }
