@@ -15,13 +15,10 @@ pub fn add_new_tag(name: &str, conn: &DBConnection) -> QueryResult<Tag> {
 pub fn tag_associated(tag: &Tag, cuecard: &Cuecard, conn: &DBConnection) -> bool {
     use cuer_database::schema::cuecard_tags::dsl::*;
 
-    match cuecard_tags
+    cuecard_tags
         .filter(cuecard_id.eq(cuecard.id))
         .filter(tag_id.eq(tag.id))
-        .first::<CuecardTag>(conn) {
-        Ok(_) => true,
-        Err(_) => false
-    }
+        .first::<CuecardTag>(conn).is_ok()
 }
 
 pub fn add_tag_to_cuecard(tag: &Tag, cuecard: &Cuecard, conn: &DBConnection) -> QueryResult<usize> {

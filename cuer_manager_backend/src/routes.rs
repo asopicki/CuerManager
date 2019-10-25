@@ -1,11 +1,11 @@
 use comrak::{markdown_to_html, ComrakOptions};
 use crate::cuecards;
 use cuer_database;
-use cuer_database::models::{Cuecard, Playlist, PlaylistData};
+use cuer_database::models::{Cuecard};
 use cuer_database::models::{Event, EventData, Program, ProgramData, Tip, TipCuecardData, TipData, Tag};
-use crate::playlists;
 use crate::programming;
 use uuidcrate::Uuid;
+use crate::guards::BackendConfig;
 
 use std::convert::From;
 use std::io;
@@ -26,19 +26,6 @@ use super::DbConn;
 use diesel::QueryResult;
 
 use diesel_migrations::{any_pending_migrations, run_pending_migrations};
-
-#[derive(Deserialize)]
-pub struct FormPlaylist {
-    name: String,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct FullPlaylist {
-    id: i32,
-    uuid: String,
-    name: String,
-    cuecards: Vec<Cuecard>,
-}
 
 #[derive(Serialize, Deserialize)]
 pub struct FormEvent<'a> {
@@ -107,67 +94,6 @@ pub struct FormNotes {
     date_modified: String
 }
 
-#[delete("/v2/playlists/<uuid>/cuesheet/<cuesheet_uuid>")]
-pub fn remove_cuesheet_from_playlist(
-    uuid: String,
-    cuesheet_uuid: String,
-    conn: DbConn,
-) -> QueryResult<Json<usize>> {
-    playlists::remove_cuesheet_from_playlist(&uuid, &cuesheet_uuid, &conn).map(Json)
-}
-
-#[put("/v2/playlists/<uuid>/cuesheet/<cuesheet_uuid>")]
-pub fn add_cuesheet_to_playlist(
-    uuid: String,
-    cuesheet_uuid: String,
-    conn: DbConn,
-) -> Result<Json<String>, Status> {
-    match playlists::add_cuesheet_to_playlist(&uuid, &cuesheet_uuid, &conn) {
-        Ok(s) => Ok(Json(s)),
-        _ => Err(Status::BadRequest),
-    }
-}
-
-#[delete("/v2/playlists/<uuid>")]
-pub fn delete_playlist(uuid: String, conn: DbConn) -> QueryResult<Json<Playlist>> {
-    playlists::delete_playlist(&uuid, &conn).map(Json)
-}
-
-#[put("/v2/playlists", format = "application/json", data = "<playlist>")]
-pub fn create_playlist(playlist: Json<FormPlaylist>, conn: DbConn) -> QueryResult<Json<Playlist>> {
-    let data = playlist.into_inner();
-    let u = Uuid::new_v4().to_hyphenated().to_string();
-
-    let p = PlaylistData {
-        uuid: &u,
-        name: &data.name,
-    };
-
-    playlists::create_playlist(&p, &conn).map(Json)
-}
-
-/*#[get("/v2/playlists/<id>")]
-fn playlist_by_id(id: i32, conn: DbConn) -> QueryResult<Json<Playlist>> {
-    playlists::playlist_by_id(&id, &conn).map(|playlist| Json(playlist))
-}*/
-
-#[get("/v2/playlists")]
-pub fn get_playlists(conn: DbConn) -> Json<Vec<FullPlaylist>> {
-    let mut lists: Vec<FullPlaylist> = vec![];
-    for p in playlists::get_playlists(&conn).unwrap().into_iter() {
-        let cuecards = playlists::get_cuecards(&p, &conn).unwrap();
-
-        lists.push(FullPlaylist {
-            id: p.id,
-            uuid: p.uuid,
-            name: p.name,
-            cuecards,
-        });
-    }
-
-    Json(lists)
-}
-
 #[get("/v2/cuecards/<uuid>/content")]
 pub fn cuecard_content_by_uuid(
     uuid: String,
@@ -210,8 +136,8 @@ pub fn set_marks(uuid: String, marks: Json<FormCuecardMarks>, conn: DbConn) -> R
     };
 
     match programming::set_marks(cuecard.id, &data.karaoke_marks, &conn) {
-        Ok(_) => return Ok(()),
-        Err(_) => return Err(Status::BadRequest)
+        Ok(_) => Ok(()),
+        Err(_) => Err(Status::BadRequest)
     }
 }
 
@@ -341,7 +267,7 @@ pub fn get_program_notes(event_id: i32, conn: DbConn) -> Result<String, Status> 
     match programming::program_by_event_id(event_id, &conn) {
         Ok(p) => {
             match p {
-                Some(p) => Ok(p.notes.unwrap_or("".to_owned())),
+                Some(p) => Ok(p.notes.unwrap_or_else(|| "".to_owned())),
                 None => Ok("".to_owned())
             }
         },
@@ -556,13 +482,6 @@ pub fn static_files(file: PathBuf) -> Option<NamedFile> {
     NamedFile::open(path).ok()
 }
 
-pub struct BackendConfig {
-    pub music_files_dir: String,
-    pub indexer_path: String,
-    pub cuecards_lib_dir: String,
-    pub db_url: String
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct FormFilename {
     filename: String,
@@ -681,11 +600,11 @@ pub fn remove_tag(uuid: String, tag: String, conn: DbConn) -> Result<(), Status>
         Ok(tag) => {
             if cuecards::tag_associated(&tag, &cuecard, &conn) {
                 match cuecards::remove_tag_from_cuecard(&tag, &cuecard, &conn) {
-                    Ok(_) => return Ok(()),
-                    Err(_) => return Err(Status::BadRequest)
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(Status::BadRequest)
                 }
             } else {
-                return Ok(())
+                Ok(())
             }
         },
         Err(_) => Err(Status::BadRequest)

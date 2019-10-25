@@ -1,13 +1,11 @@
 #![allow(proc_macro_derive_resolution_fallback)]
+use super::schema::cuecard_tags;
 use super::schema::cuecards;
 use super::schema::events;
-use super::schema::playlist_cuecards;
-use super::schema::playlists;
 use super::schema::programs;
+use super::schema::tags;
 use super::schema::tip_cuecards;
 use super::schema::tips;
-use super::schema::tags;
-use super::schema::cuecard_tags;
 pub use diesel::prelude::*;
 use diesel::{
     delete, insert_into, update, ExpressionMethods, QueryResult, RunQueryDsl, SqliteConnection,
@@ -27,7 +25,7 @@ pub struct Cuecard {
     pub meta: String,
     pub content: String,
     pub karaoke_marks: String,
-    pub music_file: String
+    pub music_file: String,
 }
 
 #[derive(AsChangeset, Debug)]
@@ -43,7 +41,7 @@ pub struct UpdateCuecard<'a> {
     pub meta: &'a str,
     pub content: &'a str,
     pub karaoke_marks: &'a str,
-    pub music_file: &'a str
+    pub music_file: &'a str,
 }
 
 #[derive(Insertable, AsChangeset, Debug)]
@@ -59,7 +57,7 @@ pub struct CuecardData<'a> {
     pub meta: &'a str,
     pub content: &'a str,
     pub karaoke_marks: &'a str,
-    pub music_file: &'a str
+    pub music_file: &'a str,
 }
 
 /*impl Cuecard {
@@ -80,83 +78,6 @@ impl<'a> CuecardData<'a> {
         use crate::schema::cuecards::dsl::*;
 
         insert_into(cuecards).values(self).execute(conn)
-    }
-}
-
-#[derive(Clone, Queryable, Identifiable, Debug, Serialize, Deserialize)]
-pub struct Playlist {
-    pub id: i32,
-    pub uuid: String,
-    pub name: String,
-}
-
-impl Playlist {
-    pub fn delete(&self, conn: &SqliteConnection) -> QueryResult<usize> {
-        use crate::schema::playlists::dsl::*;
-
-        delete(playlists.filter(id.eq(self.id))).execute(conn)
-    }
-}
-
-#[derive(Insertable, AsChangeset, Debug)]
-#[table_name = "playlists"]
-pub struct PlaylistData<'a> {
-    pub uuid: &'a str,
-    pub name: &'a str,
-}
-
-impl<'a> PlaylistData<'a> {
-    pub fn update(&self, conn: &SqliteConnection) -> QueryResult<Playlist> {
-        use crate::schema::playlists::dsl::*;
-        update(playlists).set(self).execute(conn).unwrap();
-
-        playlists.filter(uuid.eq(self.uuid)).get_result(conn)
-    }
-
-    /// Inserts the cuecard into the database, or updates an existing one.
-    pub fn create(&self, conn: &SqliteConnection) -> QueryResult<Playlist> {
-        use crate::schema::playlists::dsl::*;
-
-        insert_into(playlists).values(self).execute(conn).unwrap();
-
-        playlists.filter(uuid.eq(self.uuid)).get_result(conn)
-    }
-}
-
-#[derive(
-    Clone, Queryable, Identifiable, Associations, QueryableByName, Debug, Serialize, Deserialize,
-)]
-#[belongs_to(Playlist)]
-#[belongs_to(Cuecard)]
-#[table_name = "playlist_cuecards"]
-pub struct PlaylistCuecard {
-    pub id: i32,
-    pub playlist_id: i32,
-    pub cuecard_id: i32,
-}
-
-impl PlaylistCuecard {
-    pub fn delete(&self, conn: &SqliteConnection) -> QueryResult<usize> {
-        use crate::schema::playlist_cuecards::dsl::*;
-
-        delete(playlist_cuecards)
-            .filter(id.eq(self.id))
-            .execute(conn)
-    }
-}
-
-#[derive(Insertable, AsChangeset, Debug)]
-#[table_name = "playlist_cuecards"]
-pub struct NewPlaylistCuecard<'a> {
-    pub playlist_id: &'a i32,
-    pub cuecard_id: &'a i32,
-}
-
-impl<'a> NewPlaylistCuecard<'a> {
-    /// Inserts the cuecard into the database
-    pub fn create(&self, conn: &SqliteConnection) -> QueryResult<usize> {
-        use crate::schema::playlist_cuecards::dsl::*;
-        insert_into(playlist_cuecards).values(self).execute(conn)
     }
 }
 
@@ -244,8 +165,11 @@ pub struct ProgramData<'a> {
 impl<'a> ProgramData<'a> {
     pub fn update(&self, conn: &SqliteConnection) -> QueryResult<Program> {
         use crate::schema::programs::dsl::*;
-        update(programs).set(self)
-            .filter(uuid.eq(self.uuid)).execute(conn).unwrap();
+        update(programs)
+            .set(self)
+            .filter(uuid.eq(self.uuid))
+            .execute(conn)
+            .unwrap();
 
         programs.filter(uuid.eq(self.uuid)).get_result(conn)
     }
@@ -261,9 +185,7 @@ impl<'a> ProgramData<'a> {
 
 #[derive(Clone, Queryable, Identifiable, QueryableByName, Debug, Serialize, Deserialize)]
 #[table_name = "tips"]
-pub struct Tip
-<>
-{
+pub struct Tip {
     pub id: i32,
     pub uuid: String,
     pub name: String,
@@ -309,7 +231,7 @@ pub struct TipCuecard {
     pub id: i32,
     pub tip_id: i32,
     pub cuecard_id: i32,
-    pub sort_order: i32
+    pub sort_order: i32,
 }
 
 #[derive(Insertable, AsChangeset, Debug)]
@@ -317,7 +239,7 @@ pub struct TipCuecard {
 pub struct TipCuecardData<'a> {
     pub tip_id: &'a i32,
     pub cuecard_id: &'a i32,
-    pub sort_order: &'a i32
+    pub sort_order: &'a i32,
 }
 
 impl<'a> TipCuecardData<'a> {
@@ -339,7 +261,7 @@ impl<'a> TipCuecardData<'a> {
 #[table_name = "tags"]
 pub struct Tag {
     pub id: i32,
-    pub tag: String
+    pub tag: String,
 }
 
 #[derive(Insertable, AsChangeset, Debug)]
@@ -368,14 +290,14 @@ impl<'a> TagData<'a> {
 pub struct CuecardTag {
     pub id: i32,
     pub cuecard_id: i32,
-    pub tag_id: i32
+    pub tag_id: i32,
 }
 
 #[derive(Insertable, AsChangeset, Debug)]
 #[table_name = "cuecard_tags"]
 pub struct CuecardTagData {
     pub cuecard_id: i32,
-    pub tag_id: i32
+    pub tag_id: i32,
 }
 
 impl CuecardTagData {

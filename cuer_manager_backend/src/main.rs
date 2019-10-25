@@ -26,14 +26,14 @@ extern crate diesel_migrations;
 mod tests;
 
 mod cuecards;
-mod playlists;
 mod programming;
 mod routes;
+mod guards;
 
 use rocket_contrib::databases::diesel;
 use rocket::fairing::AdHoc;
 
-use routes::BackendConfig;
+use guards::BackendConfig;
 
 #[database("sqlite_db")]
 pub struct DbConn(diesel::SqliteConnection);
@@ -55,11 +55,6 @@ fn rocket() -> rocket::Rocket {
             routes::cuecard_content_by_uuid,
             routes::refresh_cuecards_library,
             routes::favicon,
-            routes::get_playlists,
-            routes::create_playlist,
-            routes::add_cuesheet_to_playlist,
-            routes::delete_playlist,
-            routes::remove_cuesheet_from_playlist,
             routes::get_events,
             routes::event_by_uuid,
             routes::delete_event,
@@ -106,10 +101,10 @@ fn rocket() -> rocket::Rocket {
                 .to_string();
 
             Ok(rocket.manage(BackendConfig { 
-                music_files_dir: music_files_dir,
-                cuecards_lib_dir: cuecards_lib_dir,
-                indexer_path: indexer_path,
-                db_url: db_url }))
+                music_files_dir,
+                cuecards_lib_dir,
+                indexer_path,
+                db_url }))
     }))
 }
 

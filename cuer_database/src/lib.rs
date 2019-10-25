@@ -7,7 +7,7 @@ extern crate serde;
 pub mod models;
 pub mod schema;
 
-use crate::models::{Cuecard, Playlist, Tip};
+use crate::models::{Cuecard, Tip};
 use diesel::expression::AsExpression;
 use diesel::prelude::*;
 use diesel::{delete, sql_query};
@@ -15,12 +15,6 @@ use diesel::{delete, sql_query};
 pub fn establish_connection(database_url: &str) -> SqliteConnection {
     SqliteConnection::establish(&database_url)
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
-}
-
-pub fn playlist_by_uuid(u: &str, connection: &SqliteConnection) -> QueryResult<Playlist> {
-    use crate::schema::playlists::dsl::*;
-
-    playlists.filter(uuid.eq(u)).first::<Playlist>(connection)
 }
 
 pub fn cuecard_by_uuid(u: &str, connection: &SqliteConnection) -> QueryResult<Cuecard> {
