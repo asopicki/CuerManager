@@ -260,6 +260,10 @@ fn should_index(connection: &SqliteConnection, file: &IndexFile) -> IndexAction 
                             .get_meta("title".to_string())
                             .unwrap_or(&"".to_string())),
                     )
+                    .filter(
+                        phase.eq(file.get_meta("phase".to_string())
+                        .unwrap_or(&"".to_string()))
+                    )
                     .load::<Cuecard>(connection)
                     .unwrap();
 
