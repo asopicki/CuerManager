@@ -62,6 +62,7 @@ table! {
         content -> Text,
         karaoke_marks -> Text,
         music_file -> Text,
+        file_path -> Text,
     }
 }
 

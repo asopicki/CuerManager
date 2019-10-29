@@ -33,6 +33,7 @@ struct IndexFile {
     content: String,
     meta: HashMap<String, String>,
     audio_file: String,
+    file_path: String
 }
 
 impl IndexFile {
@@ -66,7 +67,7 @@ fn is_allowed(filename: &str) -> bool {
     false
 }
 
-fn process(entry: DirEntry) -> IndexFile {
+fn process(entry: DirEntry, base_path: &str) -> IndexFile {
     lazy_static! {
         static ref TITLE_PATTERN: Regex = Regex::new(r"^#\s+(?P<title>.*)$").unwrap();
         static ref META_PATTERN: Regex =
@@ -80,11 +81,14 @@ fn process(entry: DirEntry) -> IndexFile {
 
     let filename = entry.path().to_str().unwrap().to_owned();
     let content = std::fs::read_to_string(entry.path()).unwrap();
+    let file_path = entry.path().strip_prefix(base_path).expect("not a relative path")
+        .to_str().expect("string conversion failed").to_string();
     let mut index_file = IndexFile {
         path: entry,
         content: "".to_owned(),
         meta: HashMap::new(),
         audio_file: "".to_owned(),
+        file_path
     };
     let mut has_title = false;
 
@@ -170,6 +174,7 @@ fn index(connection: &SqliteConnection, file: &IndexFile) {
         content: &file.content,
         karaoke_marks: "",
         music_file: &file.audio_file,
+        file_path: &file.file_path,
     };
     values.create(connection).unwrap();
 
@@ -178,26 +183,13 @@ fn index(connection: &SqliteConnection, file: &IndexFile) {
     std::fs::write(index_file, u.to_hyphenated().to_string()).unwrap();
 }
 
-fn update(connection: &SqliteConnection, file: &IndexFile) {
-    use self::schema::cuecards::dsl::*;
+fn update(connection: &SqliteConnection, file: &IndexFile, cuecard: &Cuecard) {
     let unphased = "unphased".to_string();
     let unknown = "unknown".to_string();
     let empty = "".to_string();
 
     let indexfile = file.index_file().unwrap();
     let fileuuid = std::fs::read_to_string(indexfile).unwrap();
-
-    let result = cuecards
-        .filter(uuid.eq(fileuuid.clone()))
-        .load::<Cuecard>(connection)
-        .unwrap_or_default();
-
-    if result.is_empty() {
-        error!("Index file found but no related cuecard in the database. Remove stale indexfile {:?} and reindex", file.index_file().unwrap());
-        return;
-    }
-
-    let cuecard = result.get(0).unwrap();
 
     let values = CuecardData {
         uuid: &fileuuid,
@@ -213,6 +205,7 @@ fn update(connection: &SqliteConnection, file: &IndexFile) {
         content: &file.content,
         karaoke_marks: "",
         music_file: &file.audio_file,
+        file_path: &file.file_path,
     };
 
     values.update(cuecard, connection).unwrap();
@@ -228,67 +221,72 @@ enum IndexAction {
     NotModified,
 }
 
-fn should_index(connection: &SqliteConnection, file: &IndexFile) -> IndexAction {
-    use self::schema::cuecards::dsl::*;
+fn should_index(connection: &SqliteConnection, file: &IndexFile) -> (IndexAction, Option<Cuecard>) {
     let indexfile = file.index_file().unwrap();
 
     if indexfile.exists() {
         debug!("Found existing index file {:?}", indexfile);
         let modified = file.path.path().metadata().unwrap().modified().unwrap();
         let imodified = indexfile.metadata().unwrap().modified().unwrap();
+        let fileuuid = std::fs::read_to_string(indexfile).unwrap();
         if modified > imodified {
             debug!(
                 "File {:?} has been modified since last index run. Will update.",
                 file.path
             );
-            return IndexAction::Update;
+            return (IndexAction::Update, get_cuecard(connection, &fileuuid, file));
         } else {
-            let fileuuid = std::fs::read_to_string(indexfile).unwrap();
-            let result = cuecards
-                .filter(uuid.eq(fileuuid.clone()))
-                .load::<Cuecard>(connection)
-                .unwrap();
-            if result.is_empty() {
-                debug!(
-                    "UUID {} not found in database. Will retry searching by title.",
-                    fileuuid
-                );
-
-                let result = cuecards
-                    .filter(
-                        title.eq(file
-                            .get_meta("title".to_string())
-                            .unwrap_or(&"".to_string())),
-                    )
-                    .filter(
-                        phase.eq(file.get_meta("phase".to_string())
-                        .unwrap_or(&"".to_string()))
-                    )
-                    .load::<Cuecard>(connection)
-                    .unwrap();
-
-                if result.is_empty() {
-                    return IndexAction::Index;
-                }
-
-                let cuecard = result.get(0).unwrap();
-                let index_file = file.index_file().unwrap();
-                info!(
-                    "Cuecard found by title. Updating index file with UUID {} from the database",
-                    &cuecard.uuid
-                );
-                std::fs::write(index_file, &cuecard.uuid).unwrap();
-
-                return IndexAction::Update;
+            
+            let result = get_cuecard(connection, &fileuuid, file);
+            
+            if result.is_none() {
+                return (IndexAction::Update, result);
             }
-        }
 
-        debug!("File {:?} has not been modified!", file.path);
-        return IndexAction::NotModified;
+            let cuecard = result.unwrap();
+            if cuecard.uuid == fileuuid {
+                debug!("File {:?} has not been modified!", file.path);
+                return (IndexAction::NotModified, Some(cuecard));
+            }
+
+            let index_file = file.index_file().unwrap();
+            info!(
+                "Cuecard found by file_path. Updating index file with UUID {} from the database",
+                &cuecard.uuid
+            );
+            std::fs::write(index_file, &cuecard.uuid).unwrap();
+
+            return (IndexAction::Update, Some(cuecard));
+        }
     }
 
     debug!("No index file found. Will index file {:?}.", file.path);
-    IndexAction::Index
+    (IndexAction::Index, None)
+}
+
+fn get_cuecard(connection: &SqliteConnection, fileuuid: &str, file: &IndexFile) -> Option<Cuecard> {
+    use self::schema::cuecards::dsl::*;
+    match cuecards
+        .filter(uuid.eq(fileuuid.clone()))
+        .first::<Cuecard>(connection)
+        {
+            Ok(cuecard) => Some(cuecard),
+            Err(_) => {
+                info!(
+                    "UUID {} not found in database. Will retry searching by file_path.",
+                    fileuuid
+                );
+
+                match cuecards
+                    .filter(
+                        file_path.eq(&file.file_path),
+                    )
+                    .first::<Cuecard>(connection) {
+                        Ok(cuecard) => Some(cuecard),
+                        Err(_) => None
+                    }
+            }
+        }
 }
 
 fn get_index_files_list(basepath: &str, min_depth: usize) -> Vec<IndexFile> {
@@ -302,7 +300,7 @@ fn get_index_files_list(basepath: &str, min_depth: usize) -> Vec<IndexFile> {
 
     for entry in walkdir {
         debug!("{}", entry.path().display());
-        let indexfile = process(entry);
+        let indexfile = process(entry, basepath);
         files.push(indexfile);
     }
 
@@ -315,14 +313,23 @@ pub fn run(config: &Config) {
     let connection = establish_connection(&config.database_url);
     for file in files {
         match should_index(&connection, &file) {
-            IndexAction::Update => {
+            (IndexAction::Update, Some(cuecard)) => {
                 info!(
                     "Reindexing file: {:?}",
                     file.path.path().file_name().unwrap()
                 );
-                update(&connection, &file);
+                update(&connection, &file, &cuecard);
             }
-            IndexAction::Index => {
+            (IndexAction::Update, None) => {
+                error!("Index file found but no related cuecard in the database. Remove stale indexfile {:?} and reindex", file.index_file().unwrap());
+            },
+            (IndexAction::Index, Some(_)) => {
+                error!(
+                    "Can't index existing cuecard: {:?}",
+                    file.path.path().file_name().unwrap()
+                );
+            }
+            (IndexAction::Index, None) => {
                 info!(
                     "Indexing new file: {:?}",
                     file.path.path().file_name().unwrap()
@@ -341,102 +348,5 @@ pub fn run(config: &Config) {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use std::fs::OpenOptions;
-    use std::path::PathBuf;
-
-    #[test]
-    fn test_allowed_file() {
-        assert_eq!(true, is_allowed(&"testfile.md".to_string()));
-    }
-
-    #[test]
-    fn test_unallowed_file() {
-        assert_eq!(
-            false,
-            is_allowed(&".de.sopicki.cuelib.testfile.md".to_string())
-        );
-    }
-
-    #[test]
-    fn test_unallowed_extension() {
-        assert_eq!(false, is_allowed(&"somefile.pdf".to_string()));
-    }
-
-    #[test]
-    fn test_get_index_files_list() {
-        let basepath = get_test_resource(&"resources/test".to_owned());
-
-        let files = get_index_files_list(&basepath.as_path().to_str().unwrap(), 0);
-
-        assert_eq!(files.len(), 3);
-    }
-
-    #[test]
-    fn test_should_index() {
-        let basepath = get_test_resource(&"resources/test/should_index".to_owned());
-
-        let files = get_index_files_list(&basepath.as_path().to_str().unwrap(), 0);
-
-        assert_eq!(files.len(), 1);
-
-        let testdb = get_test_resource(&"resources/test/testdb.sqlite".to_owned());
-
-        let connection = establish_connection(&testdb.as_path().to_str().unwrap());
-
-        let result = should_index(&connection, &files.get(0).unwrap());
-
-        assert_eq!(result, IndexAction::Index);
-    }
-
-    #[test]
-    fn test_should_not_modify() {
-        let basepath = get_test_resource(&"resources/test/should_not_modify".to_owned());
-
-        let files = get_index_files_list(&basepath.as_path().to_str().unwrap(), 0);
-
-        assert_eq!(files.len(), 1);
-
-        let testdb = get_test_resource(&"resources/test/testdb.sqlite".to_owned());
-
-        let connection = establish_connection(&testdb.as_path().to_str().unwrap());
-
-        let result = should_index(&connection, &files.get(0).unwrap());
-
-        assert_eq!(result, IndexAction::NotModified);
-    }
-
-    #[test]
-    fn test_should_update() {
-        let basepath = get_test_resource(&"resources/test/should_update".to_owned());
-
-        let files = get_index_files_list(&basepath.as_path().to_str().unwrap(), 0);
-
-        assert_eq!(files.len(), 1);
-
-        let testdb = get_test_resource(&"resources/test/testdb.sqlite".to_owned());
-
-        let connection = establish_connection(&testdb.as_path().to_str().unwrap());
-
-        touch(&files.get(0).unwrap().path.path());
-
-        let result = should_index(&connection, &files.get(0).unwrap());
-
-        assert_eq!(result, IndexAction::Update);
-    }
-
-    fn get_test_resource(resource: &str) -> PathBuf {
-        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-
-        d.push(resource);
-
-        return d;
-    }
-
-    fn touch(path: &Path) {
-        match OpenOptions::new().write(true).open(path) {
-            Ok(_) => (),
-            Err(_) => panic!("Test failure while touching file {:?}", path),
-        }
-    }
+    
 }

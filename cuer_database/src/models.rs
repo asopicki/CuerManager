@@ -26,22 +26,7 @@ pub struct Cuecard {
     pub content: String,
     pub karaoke_marks: String,
     pub music_file: String,
-}
-
-#[derive(AsChangeset, Debug)]
-#[table_name = "cuecards"]
-pub struct UpdateCuecard<'a> {
-    pub uuid: &'a str,
-    pub phase: &'a str,
-    pub rhythm: &'a str,
-    pub title: &'a str,
-    pub steplevel: &'a str,
-    pub difficulty: &'a str,
-    pub choreographer: &'a str,
-    pub meta: &'a str,
-    pub content: &'a str,
-    pub karaoke_marks: &'a str,
-    pub music_file: &'a str,
+    pub file_path: String,
 }
 
 #[derive(Insertable, AsChangeset, Debug)]
@@ -58,15 +43,8 @@ pub struct CuecardData<'a> {
     pub content: &'a str,
     pub karaoke_marks: &'a str,
     pub music_file: &'a str,
+    pub file_path: &'a str,
 }
-
-/*impl Cuecard {
-    pub fn delete(&self, conn: &SqliteConnection) -> QueryResult<usize> {
-        use crate::schema::cuecards::dsl::*;
-
-        delete(cuecards).filter(id.eq(self.id)).execute(conn)
-    }
-}*/
 
 impl<'a> CuecardData<'a> {
     pub fn update(&self, card: &Cuecard, conn: &SqliteConnection) -> QueryResult<usize> {
