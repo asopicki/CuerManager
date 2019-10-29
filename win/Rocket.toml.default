@@ -1,0 +1,23 @@
+[global]
+address = "localhost"
+music_files_dir = "music_files"
+indexer_path = "bin/cuecard_indexer"
+cuecards_lib_dir = "cuecards"
+
+[development]
+port = 8087
+log = "normal"
+library_db = "library.db"
+
+[development.databases]
+sqlite_db = { url = "library.db", pool_size = 1}
+
+[staging]
+port = 8086
+log = "normal"
+
+[production]
+library_db = "library.db"
+
+[production.databases]
+sqlite_db = { url = "library.db", pool_size = 1 }
