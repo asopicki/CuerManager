@@ -5,9 +5,10 @@ use comrak::{markdown_to_html, ComrakOptions};
 use cuer_database;
 use cuer_database::models::Cuecard;
 use cuer_database::models::{
-    Event, EventData, Program, ProgramData, Tag, Tip, TipCuecardData, TipData,
+    CuecardData, Event, EventData, Program, ProgramData, Tag, Tip, TipCuecardData, TipData,
 };
 use uuidcrate::Uuid;
+use log::{error};
 
 use std::convert::From;
 use std::io;
@@ -96,6 +97,19 @@ pub struct FormNotes {
     date_modified: String,
 }
 
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct FormMetaData {
+    choreographer: String,
+    phase: String,
+    difficulty: Option<String>,
+    rhythm: String,
+    plusfigures: Option<String>,
+    steplevel: Option<String>,
+    music: Option<String>,
+    music_file: Option<String>
+}
+
 #[get("/v2/cuecards/<uuid>/content")]
 pub fn cuecard_content_by_uuid(
     uuid: String,
@@ -144,6 +158,83 @@ pub fn set_marks(uuid: String, marks: Json<FormCuecardMarks>, conn: DbConn) -> R
     match programming::set_marks(cuecard.id, &data.karaoke_marks, &conn) {
         Ok(_) => Ok(()),
         Err(_) => Err(Status::BadRequest),
+    }
+}
+
+#[get("/v2/cuecards/<uuid>/metadata")]
+pub fn get_cuecard_metadata(uuid: String, conn: DbConn, config: State<BackendConfig>) -> Result<Json<FormMetaData>, Status> {
+    let cuecard = match cuer_database::cuecard_by_uuid(&uuid, &conn) {
+        Ok(cuecard) => cuecard,
+        Err(_) => return Err(Status::NotFound),
+    };
+
+    let base_path = PathBuf::from(&config.cuecards_lib_dir);
+
+    let path = base_path.join(PathBuf::from(cuecard.file_path)).with_extension(".meta.json");
+
+    if path.exists() {
+        match serde_json::from_str::<FormMetaData>(&std::fs::read_to_string(path).unwrap()) {
+            Ok(metadata) => Ok(Json(metadata)),
+            Err(err) => {
+                error!("Error reading metadata file: {:?}", err);
+                Err(Status::BadRequest)
+            }
+        }
+    } else {
+        Ok(Json(FormMetaData::default()))
+    }
+}
+
+#[post("/v2/cuecards/<uuid>/metadata", format="application/json", data = "<metadata>")]
+pub fn set_cuecard_metadata(uuid: String, metadata: Json<FormMetaData>, conn: DbConn, config: State<BackendConfig>) -> Result<(), Status> {
+    let data = metadata.into_inner();
+
+    let cuecard = match cuer_database::cuecard_by_uuid(&uuid, &conn) {
+        Ok(cuecard) => cuecard,
+        Err(_) => return Err(Status::NotFound),
+    };
+
+    let base_path = PathBuf::from(&config.cuecards_lib_dir);
+
+    let path = base_path.join(PathBuf::from(&cuecard.file_path)).with_extension(".meta.json");
+
+    let serialized_data = match serde_json::to_string(&data) {
+        Ok(m) => m,
+        Err(err) => {
+            error!("Error converting metadata: {:?}", err);
+            return Err(Status::BadRequest);
+        }
+    };
+
+    match std::fs::write(&path, &serialized_data) {
+        Ok(_) => (),
+        Err(error) => {
+            error!("Error writing metadata to file {:?}: {:?}", path, error);
+            return Err(Status::BadRequest);
+        }
+    };
+
+    let cuecard_data = CuecardData {
+        uuid: &cuecard.uuid,
+        phase: &data.phase,
+        rhythm: &data.rhythm,
+        title: &cuecard.title,
+        steplevel: &data.steplevel.unwrap_or_default(),
+        difficulty: &data.difficulty.unwrap_or_default(),
+        choreographer: &data.choreographer,
+        meta: &serialized_data,
+        content: &cuecard.content,
+        karaoke_marks: &cuecard.karaoke_marks,
+        music_file: &data.music_file.unwrap_or_default(),
+        file_path: &cuecard.file_path
+    };
+
+    match cuecard_data.update(&cuecard, &conn) {
+        Ok(_) => Ok(()),
+        Err(err) => {
+            error!("Error saving metadata to database: {:?}", err);
+            Err(Status::BadRequest)
+        }
     }
 }
 
@@ -627,3 +718,5 @@ pub fn remove_tag(uuid: String, tag: String, conn: DbConn) -> Result<(), Status>
         Err(_) => Err(Status::BadRequest),
     }
 }
+
+

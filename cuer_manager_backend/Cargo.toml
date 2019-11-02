@@ -6,11 +6,12 @@ edition = "2018"
 
 [dependencies]
 
+log = "0.4"
 rocket = "0.4.2"
 json_str = "*"
-serde = "*"
-serde_json = "*"
-serde_derive = "*"
+serde = "1.0"
+serde_json = "1.0"
+serde_derive = "1.0"
 hyper = "^0.12"
 unescape = "0.1.0"
 comrak = "0.6"

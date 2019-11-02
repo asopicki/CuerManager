@@ -1,4 +1,5 @@
 #![feature(proc_macro_hygiene, decl_macro)]
+#![warn(clippy::all)]
 
 #[macro_use]
 extern crate rocket;
@@ -18,6 +19,7 @@ extern crate serde;
 extern crate serde_json;
 extern crate unescape;
 extern crate uuid as uuidcrate;
+extern crate log;
 
 #[macro_use]
 extern crate diesel_migrations;
@@ -55,6 +57,8 @@ fn rocket() -> rocket::Rocket {
                 routes::search_cuecards,
                 routes::get_cuecard_by_uuid,
                 routes::cuecard_content_by_uuid,
+                routes::get_cuecard_metadata,
+                routes::set_cuecard_metadata,
                 routes::refresh_cuecards_library,
                 routes::favicon,
                 routes::get_events,
