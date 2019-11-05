@@ -1,5 +1,5 @@
 use cuer_database;
-use cuer_database::models::{Cuecard, CuecardTag, CuecardTagData, Tag, TagData};
+use cuer_database::models::{Cuecard, CuecardTag, CuecardTagData, Tag, TagData, TipCuecard};
 use diesel::prelude::*;
 
 use super::DbConn;
@@ -132,4 +132,16 @@ fn cuecards_content_search(q: &str, conn: &DBConnection) -> QueryResult<Vec<Cuec
         .select(cuecards::all_columns)
         .filter(cuecards::columns::id.eq_any(ids))
         .load::<Cuecard>(conn)
+}
+
+pub fn get_tip_cuecard_to_current_event(cuecard: &Cuecard, timestamp: &str, conn: &DBConnection) -> QueryResult<Vec<TipCuecard>> {
+    use cuer_database::schema::*;
+
+    tip_cuecards::table
+        .inner_join(tips::table.inner_join(programs::table.inner_join(events::table)))
+        .filter(tip_cuecards::columns::cuecard_id.eq(cuecard.id))
+        .filter(events::columns::date_start.le(timestamp))
+        .filter(events::columns::date_end.gt(timestamp))
+        .select(tip_cuecards::all_columns)
+        .load::<TipCuecard>(conn)
 }

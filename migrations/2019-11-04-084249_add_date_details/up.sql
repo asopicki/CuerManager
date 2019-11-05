@@ -12,8 +12,16 @@ CREATE TABLE cuecards (
 	meta TEXT NOT NULL,
 	content TEXT NOT NULL,
     karaoke_marks TEXT NOT NULL DEFAULT '',
-    music_file TEXT NOT NULL DEFAULT ''
+    music_file TEXT NOT NULL DEFAULT '',
+    file_path TEXT NOT NULL DEFAULT '',
+    date_created TEXT NOT NULL DEFAULT (STRFTIME('%Y-%m-%dT%H:%M:%S.%fZ', 'now')),
+    date_modified TEXT NOT NULL DEFAULT (STRFTIME('%Y-%m-%dT%H:%M:%S.%fZ', 'now'))
 );
+
+INSERT INTO cuecards select id, uuid, phase, rhythm, title, steplevel, difficulty, choreographer, meta, content, 
+    karaoke_marks, music_file, file_path, STRFTIME('%Y-%m-%dT%H:%M:%S.%fZ', 'now') as date_created, 
+    STRFTIME('%Y-%m-%dT%H:%M:%S.%fZ', 'now') as date_modified from cuecards_drop;
+DROP TABLE cuecards_drop;
 
 CREATE TRIGGER IF NOT EXISTS cuecards_bu BEFORE UPDATE ON cuecards BEGIN
   DELETE FROM cardindex WHERE docid=old.rowid;
@@ -30,5 +38,4 @@ CREATE TRIGGER IF NOT EXISTS cuecards_ai AFTER INSERT ON cuecards BEGIN
   new.meta, new.content);
 END;
 
-INSERT INTO cuecards select id, uuid, phase, rhythm, title, steplevel, difficulty, choreographer, meta, content, karaoke_marks, music_file from cuecards_drop;
-DROP TABLE cuecards_drop;
+ALTER TABLE tip_cuecards ADD cued_at TEXT DEFAULT NULL;

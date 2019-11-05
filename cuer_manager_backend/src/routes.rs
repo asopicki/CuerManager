@@ -1,21 +1,26 @@
 use crate::cuecards;
 use crate::guards::BackendConfig;
 use crate::programming;
+use crate::convert;
 use comrak::{markdown_to_html, ComrakOptions};
 use cuer_database;
 use cuer_database::models::Cuecard;
 use cuer_database::models::{
-    Event, EventData, Program, ProgramData, Tag, Tip, TipCuecardData, TipData,
+    CuecardData, Event, EventData, Program, ProgramData, Tag, Tip, TipCuecard, TipCuecardData, TipData,
 };
 use uuidcrate::Uuid;
+use log::{error, info};
 
 use std::convert::From;
 use std::io;
+use std::io::Write;
 use std::path::{Path, PathBuf};
+use tempfile;
 
 use rocket::http::Status;
 use rocket::response::{content, NamedFile};
 use rocket::State;
+use rocket::data::{Data};
 use rocket_contrib::json::Json;
 
 use chrono::prelude::*;
@@ -49,6 +54,7 @@ pub struct FullTip {
     date_start: String,
     date_end: String,
     cuecards: Vec<Cuecard>,
+    tip_cuecards: Vec<TipCuecard>
 }
 
 impl From<Tip> for FullTip {
@@ -61,6 +67,7 @@ impl From<Tip> for FullTip {
             date_start: tip.date_start,
             date_end: tip.date_end,
             cuecards: Vec::new(),
+            tip_cuecards: Vec::new(),
         }
     }
 }
@@ -78,6 +85,7 @@ pub struct FormTipCuecard {
     tip_uuid: String,
     cuecard_uuid: String,
     sort_order: i32,
+    cued_at: Option<String>
 }
 
 #[derive(Serialize, Deserialize)]
@@ -94,6 +102,19 @@ pub struct FormTag {
 pub struct FormNotes {
     notes: String,
     date_modified: String,
+}
+
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct FormMetaData {
+    choreographer: String,
+    phase: String,
+    difficulty: Option<String>,
+    rhythm: String,
+    plusfigures: Option<String>,
+    steplevel: Option<String>,
+    music: Option<String>,
+    music_file: Option<String>
 }
 
 #[get("/v2/cuecards/<uuid>/content")]
@@ -144,6 +165,121 @@ pub fn set_marks(uuid: String, marks: Json<FormCuecardMarks>, conn: DbConn) -> R
     match programming::set_marks(cuecard.id, &data.karaoke_marks, &conn) {
         Ok(_) => Ok(()),
         Err(_) => Err(Status::BadRequest),
+    }
+}
+
+#[get("/v2/cuecards/<uuid>/metadata")]
+pub fn get_cuecard_metadata(uuid: String, conn: DbConn, config: State<BackendConfig>) -> Result<Json<FormMetaData>, Status> {
+    let cuecard = match cuer_database::cuecard_by_uuid(&uuid, &conn) {
+        Ok(cuecard) => cuecard,
+        Err(_) => return Err(Status::NotFound),
+    };
+
+    let base_path = PathBuf::from(&config.cuecards_lib_dir);
+
+    let path = base_path.join(PathBuf::from(cuecard.file_path)).with_extension(".meta.json");
+
+    if path.exists() {
+        match serde_json::from_str::<FormMetaData>(&std::fs::read_to_string(path).unwrap()) {
+            Ok(metadata) => Ok(Json(metadata)),
+            Err(err) => {
+                error!("Error reading metadata file: {:?}", err);
+                Err(Status::BadRequest)
+            }
+        }
+    } else {
+        Ok(Json(FormMetaData::default()))
+    }
+}
+
+#[post("/v2/cuecards/<uuid>/metadata", format="application/json", data = "<metadata>")]
+pub fn set_cuecard_metadata(uuid: String, metadata: Json<FormMetaData>, conn: DbConn, config: State<BackendConfig>) -> Result<(), Status> {
+    let data = metadata.into_inner();
+
+    let cuecard = match cuer_database::cuecard_by_uuid(&uuid, &conn) {
+        Ok(cuecard) => cuecard,
+        Err(_) => return Err(Status::NotFound),
+    };
+
+    let base_path = PathBuf::from(&config.cuecards_lib_dir);
+
+    let path = base_path.join(PathBuf::from(&cuecard.file_path)).with_extension(".meta.json");
+
+    let serialized_data = match serde_json::to_string(&data) {
+        Ok(m) => m,
+        Err(err) => {
+            error!("Error converting metadata: {:?}", err);
+            return Err(Status::BadRequest);
+        }
+    };
+
+    match std::fs::write(&path, &serialized_data) {
+        Ok(_) => (),
+        Err(error) => {
+            error!("Error writing metadata to file {:?}: {:?}", path, error);
+            return Err(Status::BadRequest);
+        }
+    };
+
+    let time = Utc::now();
+
+    let cuecard_data = CuecardData {
+        uuid: &cuecard.uuid,
+        phase: &data.phase,
+        rhythm: &data.rhythm,
+        title: &cuecard.title,
+        steplevel: &data.steplevel.unwrap_or_default(),
+        difficulty: &data.difficulty.unwrap_or_default(),
+        choreographer: &data.choreographer,
+        meta: &serialized_data,
+        content: &cuecard.content,
+        karaoke_marks: &cuecard.karaoke_marks,
+        music_file: &data.music_file.unwrap_or_default(),
+        file_path: &cuecard.file_path,
+        date_created: &cuecard.date_created,
+        date_modified: &time.format("%FT%T%.3fZ").to_string()
+    };
+
+    match cuecard_data.update(&cuecard, &conn) {
+        Ok(_) => Ok(()),
+        Err(err) => {
+            error!("Error saving metadata to database: {:?}", err);
+            Err(Status::BadRequest)
+        }
+    }
+}
+
+#[post("/v2/cuecards/<uuid>/cued_at")]
+pub fn cued_at(uuid: String, conn: DbConn) -> Result<(), Status> {
+    let cuecard = match cuer_database::cuecard_by_uuid(&uuid, &conn) {
+        Ok(cuecard) => cuecard,
+        Err(_) => return Err(Status::NotFound),
+    };
+
+    let time = Utc::now();
+
+    let timestamp = time.format("%FT%T").to_string();
+
+    match cuecards::get_tip_cuecard_to_current_event(&cuecard, &timestamp, &conn) {
+        Ok(tip_cuecards) => {
+            for tip_cuecard in tip_cuecards.iter() {
+                let tip_cuecard_data = TipCuecardData {
+                    tip_id: &tip_cuecard.tip_id,
+                    cuecard_id: &cuecard.id,
+                    sort_order: &tip_cuecard.sort_order,
+                    cued_at: Some(time.format("%FT%T%.3fZ").to_string())
+                };
+
+                match programming::update_tip_cuecard(&tip_cuecard_data, &conn) {
+                    Ok(_) => (),
+                    Err(_) => {
+                        return Err(Status::BadRequest)
+                    }
+                }
+            }
+            Ok(())
+        },
+        Err(_) => Err(Status::BadRequest)
     }
 }
 
@@ -327,8 +463,11 @@ pub fn get_tips(program_id: i32, conn: DbConn) -> Result<Json<Vec<FullTip>>, Sta
                 let cuecards =
                     programming::get_cuecards(&tip, &conn).unwrap_or_else(|_| Vec::new());
 
+                let tip_cuecards = programming::get_tip_cuecards(&tip, &conn).unwrap_or_else(|_| Vec::new());
+
                 let mut full_tip = FullTip::from(tip);
                 full_tip.cuecards = cuecards;
+                full_tip.tip_cuecards = tip_cuecards;
                 result.push(full_tip)
             }
             Json(result)
@@ -393,6 +532,7 @@ pub fn create_tip_cuecard(
         tip_id: &tip.id,
         cuecard_id: &cuecard.id,
         sort_order: &data.sort_order,
+        cued_at: None
     };
 
     let result = programming::create_tip_cuecard(&tip_cuecard_data, &conn);
@@ -424,6 +564,7 @@ pub fn update_tip_cuecard(
         tip_id: &tip.id,
         cuecard_id: &cuecard.id,
         sort_order: &data.sort_order,
+        cued_at: data.cued_at
     };
 
     let result = programming::update_tip_cuecard(&tip_cuecard_data, &conn);
@@ -462,6 +603,7 @@ pub fn remove_tip_cuecard(
         tip_id: &tip_cuecard.tip_id,
         cuecard_id: &tip_cuecard.cuecard_id,
         sort_order: &tip_cuecard.sort_order,
+        cued_at: tip_cuecard.cued_at
     };
 
     let result = programming::remove_tip_cuecard(&tip_cuecard_data, &conn);
@@ -625,5 +767,57 @@ pub fn remove_tag(uuid: String, tag: String, conn: DbConn) -> Result<(), Status>
             }
         }
         Err(_) => Err(Status::BadRequest),
+    }
+}
+
+pub struct MarkdownFile(NamedFile);
+
+impl<'r> rocket::response::Responder<'r> for MarkdownFile {
+    fn respond_to(self, req: &rocket::request::Request) -> rocket::response::Result<'r> {
+        rocket::response::Response::build_from(self.0.respond_to(req)?)
+            .raw_header("Content-Type", "text/markdown")
+            .raw_header("Content-Disposition", "attachment; filename=\"converted.md\"")
+            .ok()
+    }
+}
+
+#[post("/v2/convert/odt", format="application/octet-stream", data="<data>")]
+pub fn convert_odt_file(data: Data) -> Result<MarkdownFile, Status> {
+
+    let src_file = tempfile::NamedTempFile::new().unwrap();
+    let file = std::fs::File::create(&src_file).unwrap();
+
+    let mut writer = std::io::BufWriter::new(&file);
+    match data.stream_to(&mut writer) {
+        Ok(size) => info!("Saved {} bytes to temporary file", size),
+        Err(error) => {
+            error!("Error writing to temporary file: {:?}", error);
+            return Err(Status::BadRequest);
+        }
+    }
+    match writer.flush() {
+        Ok(_) => (),
+        Err(err) => {
+            error!("Error flushing output file: {:?}", err);
+            return Err(Status::BadRequest);
+        }
+    }
+
+    let file = std::fs::File::open(src_file).unwrap();
+    let mut reader = std::io::BufReader::new(file);
+
+
+    let target = tempfile::Builder::new().suffix(".md").tempfile().unwrap();
+    let target_file = std::fs::File::create(&target).unwrap();
+    let mut writer = std::io::BufWriter::new(target_file);
+
+    match convert::convert_to_markdown(&mut reader, &mut writer) {
+        Ok(_) => {
+            match NamedFile::open(target) {
+                Ok(file) => Ok(MarkdownFile(file)),
+                Err(_) => Err(Status::BadRequest)
+            }
+        }
+        Err(_) => Err(Status::BadRequest)
     }
 }

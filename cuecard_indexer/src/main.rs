@@ -1,3 +1,4 @@
+#![warn(clippy::all)]
 extern crate structopt;
 extern crate cuecard_indexer;
 extern crate env_logger;
@@ -9,7 +10,7 @@ use std::env;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "cuecard_indexer")]
-/// Creates an index of cue cards in a Sqlite database
+/// Helper tool to keep a directory of cue cards in sync with the database
 struct ProgramOptions {
     #[structopt(short, long)]
     /// Sets the path to the databbase to use

@@ -63,6 +63,8 @@ table! {
         karaoke_marks -> Text,
         music_file -> Text,
         file_path -> Text,
+        date_created -> Text,
+        date_modified -> Text,
     }
 }
 
@@ -127,6 +129,7 @@ table! {
         tip_id -> Integer,
         cuecard_id -> Integer,
         sort_order -> Integer,
+        cued_at -> Nullable<Text>,
     }
 }
 

@@ -1,14 +1,18 @@
 extern crate diesel;
 extern crate regex;
+
+#[macro_use]
+extern crate serde_derive;
+extern crate serde;
 extern crate serde_json;
 extern crate walkdir;
-#[macro_use]
-extern crate lazy_static;
+extern crate once_cell;
 #[macro_use]
 extern crate log;
 extern crate cuer_database;
 extern crate filetime;
 extern crate uuid as uuidcrate;
+extern crate chrono;
 
 use self::cuer_database::*;
 use self::diesel::prelude::*;
@@ -17,36 +21,103 @@ use self::walkdir::{DirEntry, WalkDir};
 use filetime::{set_file_mtime, FileTime};
 use regex::Regex;
 use uuidcrate::Uuid;
+use once_cell::unsync::Lazy;
+use chrono::prelude::*;
 
+use std::boxed::Box;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 use std::vec::Vec;
+use std::fmt;
+use std::str::FromStr;
 
 pub struct Config {
     pub basepath: String,
     pub database_url: String,
 }
 
-struct IndexFile {
+struct IndexFileData {
     path: DirEntry,
     content: String,
-    meta: HashMap<String, String>,
-    audio_file: String,
+    meta: Box<HashMap<MetaDataType, String>>,
     file_path: String
 }
 
-impl IndexFile {
+#[derive(PartialEq, Eq, Hash, Clone, Debug, Serialize)]
+#[serde(untagged)]
+enum MetaDataType {
+    Title,
+    Choreographer,
+    Phase,
+    Difficulty,
+    Rhythm,
+    Plusfigures,
+    Steplevel,
+    Music,
+    MusicFile,
+    Extra(String)
+}
+
+impl FromStr for MetaDataType {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<MetaDataType, ()> {
+        match s {
+            "title" => Ok(MetaDataType::Title),
+            "choreographer" => Ok(MetaDataType::Choreographer),
+            "phase" => Ok(MetaDataType::Phase),
+            "difficulty" => Ok(MetaDataType::Difficulty),
+            "rhythm" => Ok(MetaDataType::Rhythm),
+            "plusfigures" => Ok(MetaDataType::Plusfigures),
+            "steplevel" => Ok(MetaDataType::Steplevel),
+            "music" => Ok(MetaDataType::Music),
+            "music_file" => Ok(MetaDataType::MusicFile),
+            s => Ok(MetaDataType::Extra(s.to_owned())),
+        }
+    }
+}
+
+impl fmt::Display for MetaDataType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match &self {
+            &MetaDataType::Title => write!(f, "title"),
+            &MetaDataType::Choreographer => write!(f, "choreographer"),
+            &MetaDataType::Phase => write!(f, "phase"),
+            &MetaDataType::Difficulty => write!(f, "difficulty"),
+            &MetaDataType::Rhythm => write!(f, "rhythm"),
+            &MetaDataType::Plusfigures => write!(f, "plusfigures"),
+            &MetaDataType::Steplevel => write!(f, "steplevel"),
+            &MetaDataType::Music => write!(f, "music"),
+            &MetaDataType::MusicFile => write!(f, "music_file"),
+            &MetaDataType::Extra(s) => write!(f, "{}", s),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct MetaData {
+    choreographer: String,
+    phase: String,
+    difficulty: Option<String>,
+    rhythm: String,
+    plusfigures: Option<String>,
+    steplevel: Option<String>,
+    music: Option<String>,
+    music_file: Option<String>
+}
+
+impl IndexFileData {
     fn set_content(&mut self, content: &str) {
         self.content = content.to_string();
     }
 
-    fn set_meta(&mut self, key: &str, value: &str) {
-        self.meta.insert(String::from(key), String::from(value));
+    fn metadata(&mut self) -> &mut HashMap<MetaDataType, String> {
+        self.meta.as_mut()
     }
 
-    fn get_meta(&self, key: String) -> Option<&String> {
-        self.meta.get(&key)
+    fn get_meta(&self, key: MetaDataType) -> Option<&String> {
+        self.meta.as_ref().get(&key)
     }
 
     fn index_file(&self) -> Option<PathBuf> {
@@ -56,6 +127,10 @@ impl IndexFile {
         let path = Path::new(&filename).to_owned();
         let parent = self.path.path().parent().unwrap();
         Some(parent.join(&path))
+    }
+
+    fn metadata_file(&self) -> PathBuf {
+        self.path.path().with_extension("meta.json")
     }
 }
 
@@ -67,114 +142,170 @@ fn is_allowed(filename: &str) -> bool {
     false
 }
 
-fn process(entry: DirEntry, base_path: &str) -> IndexFile {
-    lazy_static! {
-        static ref TITLE_PATTERN: Regex = Regex::new(r"^#\s+(?P<title>.*)$").unwrap();
-        static ref META_PATTERN: Regex =
-            Regex::new(r"^[\*]\s+[\*][\*](?P<metaname>\w+)[\*][\*]:\s+(?P<metatext>.*)$").unwrap();
-        static ref PHASE_PATTERN: Regex = Regex::new(r"^(I|II|III|IV|V|VI)\s*(\+.*)?$").unwrap();
-        static ref AUDIO_FILE_PATTERN: Regex =
-            Regex::new("^<meta\\s+name=\"x:audio-file\"\\s+content=\"(?P<filename>.*)\"\\s*>")
-                .unwrap();
-        static ref MAIL_PATTERN: Regex = Regex::new(r"\[(?P<name>.+)\]\(mailto.*\)").unwrap();
-    }
+fn process(entry: DirEntry, base_path: &str) -> IndexFileData {
+    let title_pattern = Lazy::new(|| Regex::new(r"^#\s+(?P<title>.*)$").unwrap());
+    let meta_pattern = Lazy::new(|| Regex::new(r"^[\*]\s+[\*][\*](?P<metaname>\w+)[\*][\*]:\s+(?P<metatext>.*)$").unwrap());
+    let phase_pattern = Lazy::new(|| Regex::new(r"^(I|II|III|IV|V|VI)\s*(\+.*)?$").unwrap());
 
-    let filename = entry.path().to_str().unwrap().to_owned();
+    let mail_pattern = Lazy::new(|| Regex::new(r"\[(?P<name>.+)\]\(mailto.*\)").unwrap());
+
     let content = std::fs::read_to_string(entry.path()).unwrap();
     let file_path = entry.path().strip_prefix(base_path).expect("not a relative path")
         .to_str().expect("string conversion failed").to_string();
-    let mut index_file = IndexFile {
+    let mut index_file = IndexFileData {
         path: entry,
         content: "".to_owned(),
-        meta: HashMap::new(),
-        audio_file: "".to_owned(),
+        meta: Box::new(HashMap::new()),
         file_path
     };
-    let mut has_title = false;
 
-    for line in content.lines() {
-        if !has_title {
-            if let Some(caps) = TITLE_PATTERN.captures(line) {
-                index_file.set_meta("title", caps.name("title").unwrap().as_str());
-                has_title = true;
-            }
-        }
+    {
+        let meta_data = index_file.metadata();
+        let mut has_title = false;
 
-        if let Some(caps) = META_PATTERN.captures(line) {
-            let key = caps.name("metaname").unwrap().as_str();
-            let mut text = caps.name("metatext").unwrap().as_str();
-
-            if MAIL_PATTERN.is_match(text) {
-                //info!("Mail detected. Extracting name.");
-                let mail_caps = MAIL_PATTERN.captures(text).unwrap();
-                text = mail_caps.name("name").unwrap().as_str();
-                //info!("Name extracted: {:?}", text);
+        for line in content.lines() {
+            if !has_title {
+                if let Some(caps) = title_pattern.captures(line) {
+                    meta_data.insert(MetaDataType::Title, caps.name("title").unwrap().as_str().to_string());
+                    has_title = true;
+                }
             }
 
-            index_file.set_meta(&key.to_lowercase(), text);
+            if let Some(caps) = meta_pattern.captures(line) {
+                let name = caps.name("metaname").unwrap().as_str();
+                let name = name.to_lowercase();
+                let key = name.as_str();
+                let mut text = caps.name("metatext").unwrap().as_str();
+
+                if mail_pattern.is_match(text) {
+                    debug!("Mail detected. Extracting name.");
+                    let mail_caps = mail_pattern.captures(text).unwrap();
+                    text = mail_caps.name("name").unwrap().as_str();
+                    debug!("Name extracted: {:?}", text);
+                }
+
+                meta_data.insert(MetaDataType::from_str(key).unwrap(), text.to_string());
+            }
+
         }
 
-        if let Some(caps) = AUDIO_FILE_PATTERN.captures(line) {
-            let filename = caps.name("filename").unwrap().as_str();
-            index_file.audio_file = filename.to_string();
+        let default = "unphased".to_string();
+
+        let phase = meta_data.get(&MetaDataType::Phase)
+            .unwrap_or(&default)
+            .clone();
+
+        match phase_pattern.captures(&phase) {
+            Some(caps) => {
+                let p = match caps.get(1) {
+                    Some(m) => m.as_str(),
+                    _ => "unphased",
+                };
+
+                let plusfigures = match caps.get(2) {
+                    Some(m) => m.as_str(),
+                    _ => "",
+                };
+
+                meta_data.insert(MetaDataType::Phase, p.to_string());
+                meta_data.insert(MetaDataType::Plusfigures, plusfigures.to_string());
+            }
+            _ => {
+                meta_data.insert(MetaDataType::Phase, "unphased".to_owned());
+                meta_data.insert(MetaDataType::Plusfigures, "".to_owned());
+            }
         }
     }
     index_file.set_content(&content);
 
-    let default = "unphased".to_string();
-
-    let phase = index_file
-        .get_meta("phase".to_string())
-        .unwrap_or(&default)
-        .clone();
-
-    match PHASE_PATTERN.captures(&phase) {
-        Some(caps) => {
-            let p = match caps.get(1) {
-                Some(m) => m.as_str(),
-                _ => "unphased",
-            };
-
-            let plusfigures = match caps.get(2) {
-                Some(m) => m.as_str(),
-                _ => "",
-            };
-
-            index_file.set_meta("phase", p);
-            index_file.set_meta("plusfigures", plusfigures);
-        }
-        _ => {
-            index_file.set_meta("phase", "unphased");
-            index_file.set_meta("plusfigures", "");
-        }
+    if index_file.metadata_file().exists() {
+        process_metadata_file(&index_file.metadata_file(), index_file.metadata());
+    } else {
+        write_metadata_file(&index_file);
     }
-
-    index_file.set_meta("_cuesheetpath", &filename);
 
     index_file
 }
 
-fn index(connection: &SqliteConnection, file: &IndexFile) {
+fn write_metadata_file(file: &IndexFileData) {
+    let unphased = "unphased".to_string();
+    let unknown = "unknown".to_string();
+    let empty = "".to_string();
+
+    let choreographer = file.get_meta(MetaDataType::Choreographer).unwrap_or(&unknown);
+    let phase = file.get_meta(MetaDataType::Phase).unwrap_or(&unphased);
+    let difficulty = file.get_meta(MetaDataType::Difficulty).unwrap_or(&empty);
+    let rhythm = file.get_meta(MetaDataType::Rhythm).unwrap_or(&unknown);
+    let plusfigures = file.get_meta(MetaDataType::Plusfigures).unwrap_or(&empty);
+    let steplevel = file.get_meta(MetaDataType::Steplevel).unwrap_or(&empty);
+    let music = file.get_meta(MetaDataType::Music).unwrap_or(&empty);
+    let music_file = file.get_meta(MetaDataType::MusicFile).unwrap_or(&empty);
+
+    let metadata = MetaData {
+        choreographer: choreographer.to_string(),
+        phase: phase.to_string(),
+        difficulty: Some(difficulty.to_string()),
+        rhythm: rhythm.to_string(),
+        plusfigures: Some(plusfigures.to_string()),
+        steplevel: Some(steplevel.to_string()),
+        music: Some(music.to_string()),
+        music_file: Some(music_file.to_string())
+    };
+
+    std::fs::write(file.metadata_file(), serde_json::to_string(&metadata).unwrap()).unwrap();
+}
+
+fn process_metadata_file(filepath: &PathBuf, data: &mut HashMap<MetaDataType, String>)  {
+    if let Ok(metadata) = serde_json::from_str::<MetaData>(&std::fs::read_to_string(filepath).unwrap()) {
+
+        data.insert(MetaDataType::Choreographer, metadata.choreographer);
+        data.insert(MetaDataType::Phase, metadata.phase);
+        data.insert(MetaDataType::Difficulty, metadata.difficulty.unwrap_or_default());
+        data.insert(MetaDataType::Rhythm, metadata.rhythm);
+        data.insert(MetaDataType::Plusfigures, metadata.plusfigures.unwrap_or_default());
+        data.insert(MetaDataType::Steplevel, metadata.steplevel.unwrap_or_default());
+        data.insert(MetaDataType::Music, metadata.music.unwrap_or_default());
+        data.insert(MetaDataType::MusicFile, metadata.music_file.unwrap_or_default());
+    }
+}
+
+fn index(connection: &SqliteConnection, file: &IndexFileData) {
     let u = Uuid::new_v4();
     let unphased = "unphased".to_string();
     let unknown = "unknown".to_string();
     let empty = "".to_string();
 
+    let keys = file.meta.keys().map(|key| key.to_string()).collect::<Vec<String>>();
+    let values = file.meta.values().map(|value| value.to_string()).collect::<Vec<String>>();
+
+    let data = keys.iter().zip(values.iter()).collect::<HashMap<&String, &String>>();
+    let metadata = match serde_json::to_string(&data) {
+        Ok(result) => result,
+        Err(err) => {
+            error!("Serializing metadata failed with error: {:?}", err);
+            String::from("{}")
+        }
+    };
+
+    let time = Utc::now();
+
     let values = CuecardData {
         uuid: &u.to_hyphenated().to_string(),
-        phase: file.get_meta("phase".to_string()).unwrap_or(&unphased),
-        rhythm: file.get_meta("rhythm".to_string()).unwrap_or(&unknown),
-        title: file.get_meta("title".to_string()).unwrap_or(&unknown),
+        phase: file.get_meta(MetaDataType::Phase).unwrap_or(&unphased),
+        rhythm: file.get_meta(MetaDataType::Rhythm).unwrap_or(&unknown),
+        title: file.get_meta(MetaDataType::Title).unwrap_or(&unknown),
         choreographer: file
-            .get_meta("choreographer".to_string())
+            .get_meta(MetaDataType::Choreographer)
             .unwrap_or(&unknown),
-        steplevel: file.get_meta("steplevel".to_string()).unwrap_or(&empty),
-        difficulty: file.get_meta("difficulty".to_string()).unwrap_or(&empty),
-        meta: &serde_json::to_string(&file.meta).unwrap_or_else(|_| "{}".to_string()),
+        steplevel: file.get_meta(MetaDataType::Steplevel).unwrap_or(&empty),
+        difficulty: file.get_meta(MetaDataType::Difficulty).unwrap_or(&empty),
+        meta: &metadata,
         content: &file.content,
         karaoke_marks: "",
-        music_file: &file.audio_file,
+        music_file: &file.get_meta(MetaDataType::MusicFile).unwrap_or(&empty),
         file_path: &file.file_path,
+        date_created: &time.format("%FT%T%.3fZ").to_string(),
+        date_modified: &time.format("%FT%T%.3fZ").to_string()
     };
     values.create(connection).unwrap();
 
@@ -183,7 +314,7 @@ fn index(connection: &SqliteConnection, file: &IndexFile) {
     std::fs::write(index_file, u.to_hyphenated().to_string()).unwrap();
 }
 
-fn update(connection: &SqliteConnection, file: &IndexFile, cuecard: &Cuecard) {
+fn update(connection: &SqliteConnection, file: &IndexFileData, cuecard: &Cuecard) {
     let unphased = "unphased".to_string();
     let unknown = "unknown".to_string();
     let empty = "".to_string();
@@ -191,27 +322,44 @@ fn update(connection: &SqliteConnection, file: &IndexFile, cuecard: &Cuecard) {
     let indexfile = file.index_file().unwrap();
     let fileuuid = std::fs::read_to_string(indexfile).unwrap();
 
+    let keys = file.meta.keys().map(|key| key.to_string()).collect::<Vec<String>>();
+    let values = file.meta.values().map(|value| value.to_string()).collect::<Vec<String>>();
+
+    let data = keys.iter().zip(values.iter()).collect::<HashMap<&String, &String>>();
+    let metadata = match serde_json::to_string(&data) {
+        Ok(result) => result,
+        Err(err) => {
+            error!("Serializing metadata failed with error: {:?}", err);
+            String::from("{}")
+        }
+    };
+
+    let time = Utc::now();
+
     let values = CuecardData {
         uuid: &fileuuid,
-        phase: file.get_meta("phase".to_string()).unwrap_or(&unphased),
-        rhythm: file.get_meta("rhythm".to_string()).unwrap_or(&unknown),
-        title: file.get_meta("title".to_string()).unwrap_or(&unknown),
+        phase: file.get_meta(MetaDataType::Phase).unwrap_or(&unphased),
+        rhythm: file.get_meta(MetaDataType::Rhythm).unwrap_or(&unknown),
+        title: file.get_meta(MetaDataType::Title).unwrap_or(&unknown),
         choreographer: file
-            .get_meta("choreographer".to_string())
+            .get_meta(MetaDataType::Choreographer)
             .unwrap_or(&unknown),
-        steplevel: file.get_meta("steplevel".to_string()).unwrap_or(&empty),
-        difficulty: file.get_meta("difficulty".to_string()).unwrap_or(&empty),
-        meta: &serde_json::to_string(&file.meta).unwrap_or_else(|_| "{}".to_string()),
+        steplevel: file.get_meta(MetaDataType::Steplevel).unwrap_or(&empty),
+        difficulty: file.get_meta(MetaDataType::Difficulty).unwrap_or(&empty),
+        meta: &metadata,
         content: &file.content,
         karaoke_marks: "",
-        music_file: &file.audio_file,
+        music_file: &file.get_meta(MetaDataType::MusicFile).unwrap_or(&empty),
         file_path: &file.file_path,
+        date_created: &cuecard.date_created,
+        date_modified: &time.format("%FT%T%.3fZ").to_string()
     };
 
     values.update(cuecard, connection).unwrap();
     let indexfile = file.index_file().unwrap();
     let filetime = FileTime::from_system_time(SystemTime::now());
     set_file_mtime(indexfile, filetime).unwrap();
+
 }
 
 #[derive(PartialEq, Eq, Debug)]
@@ -221,7 +369,7 @@ enum IndexAction {
     NotModified,
 }
 
-fn should_index(connection: &SqliteConnection, file: &IndexFile) -> (IndexAction, Option<Cuecard>) {
+fn should_index(connection: &SqliteConnection, file: &IndexFileData) -> (IndexAction, Option<Cuecard>) {
     let indexfile = file.index_file().unwrap();
 
     if indexfile.exists() {
@@ -264,7 +412,7 @@ fn should_index(connection: &SqliteConnection, file: &IndexFile) -> (IndexAction
     (IndexAction::Index, None)
 }
 
-fn get_cuecard(connection: &SqliteConnection, fileuuid: &str, file: &IndexFile) -> Option<Cuecard> {
+fn get_cuecard(connection: &SqliteConnection, fileuuid: &str, file: &IndexFileData) -> Option<Cuecard> {
     use self::schema::cuecards::dsl::*;
     match cuecards
         .filter(uuid.eq(fileuuid.clone()))
@@ -289,14 +437,14 @@ fn get_cuecard(connection: &SqliteConnection, fileuuid: &str, file: &IndexFile) 
         }
 }
 
-fn get_index_files_list(basepath: &str, min_depth: usize) -> Vec<IndexFile> {
+fn get_index_files_list(basepath: &str, min_depth: usize) -> Vec<IndexFileData> {
     let walkdir = WalkDir::new(basepath)
         .min_depth(min_depth)
         .into_iter()
         .filter_map(|e| e.ok())
         .filter(|e| is_allowed(&e.file_name().to_str().unwrap().to_lowercase()));
 
-    let mut files: Vec<IndexFile> = vec![];
+    let mut files: Vec<IndexFileData> = vec![];
 
     for entry in walkdir {
         debug!("{}", entry.path().display());
