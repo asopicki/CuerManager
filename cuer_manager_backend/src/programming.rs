@@ -111,6 +111,15 @@ pub fn get_cuecards(tip: &Tip, conn: &DBConnection) -> QueryResult<Vec<Cuecard>>
         .load::<Cuecard>(conn)
 }
 
+
+pub fn get_tip_cuecards(tip: &Tip, conn: &DBConnection) -> QueryResult<Vec<TipCuecard>> {
+    cuer_database::schema::tip_cuecards::table
+        .filter(cuer_database::schema::tip_cuecards::columns::tip_id.eq(tip.id))
+        .select(cuer_database::schema::tip_cuecards::all_columns)
+        .order(cuer_database::schema::tip_cuecards::columns::sort_order)
+        .load::<TipCuecard>(conn)
+}
+
 pub fn set_marks(c_id: i32, marks: &str, conn: &DBConnection) -> QueryResult<usize> {
     use cuer_database::schema::cuecards::dsl::*;
 

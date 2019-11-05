@@ -1,6 +1,6 @@
 [package]
 name = "cuer_manager"
-version = "1.4.0"
+version = "1.5.0"
 authors = ["Alexander Sopicki"]
 edition = "2018"
 
@@ -25,6 +25,9 @@ cuer_database = { path="../cuer_database" }
 dirs = "^2.0"
 duct = "0.13"
 base64 = "0.10"
+zip = "0.5"
+xml-rs = "0.8"
+tempfile = "3.1"
 
 [dependencies.rocket_contrib]
 version = "0.4.2"

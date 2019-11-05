@@ -20,6 +20,9 @@ extern crate serde_json;
 extern crate unescape;
 extern crate uuid as uuidcrate;
 extern crate log;
+extern crate zip;
+extern crate xml;
+extern crate tempfile;
 
 #[macro_use]
 extern crate diesel_migrations;
@@ -31,6 +34,7 @@ mod cuecards;
 mod guards;
 mod programming;
 mod routes;
+mod convert;
 
 use rocket::fairing::AdHoc;
 use rocket_contrib::databases::diesel;
@@ -41,9 +45,6 @@ use guards::BackendConfig;
 pub struct DbConn(diesel::SqliteConnection);
 
 embed_migrations!("../migrations");
-
-// The URL to the database, set via the `DATABASE_URL` environment variable.
-//static DEFAULT_DATABASE_URL: &'static str = ".local/share/library.db";
 
 fn rocket() -> rocket::Rocket {
     rocket::ignite()
@@ -56,6 +57,7 @@ fn rocket() -> rocket::Rocket {
                 routes::get_all_cuecards,
                 routes::search_cuecards,
                 routes::get_cuecard_by_uuid,
+                routes::cued_at,
                 routes::cuecard_content_by_uuid,
                 routes::get_cuecard_metadata,
                 routes::set_cuecard_metadata,
@@ -82,7 +84,8 @@ fn rocket() -> rocket::Rocket {
                 routes::get_all_tags,
                 routes::get_tags,
                 routes::add_tag,
-                routes::remove_tag
+                routes::remove_tag,
+                routes::convert_odt_file
             ],
         )
         .attach(AdHoc::on_attach("Backend Config", |rocket| {

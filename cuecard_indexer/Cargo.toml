@@ -1,6 +1,6 @@
 [package]
 name = "cuecard_indexer"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["Alexander Sopicki <asopicki@gmail.com>"]
 edition = "2018"
 
@@ -18,3 +18,4 @@ log = "^0.4"
 env_logger = "0.7"
 cuer_database = { path="../cuer_database" }
 structopt = { version = "0.3", default-features = false }
+chrono = "0.4"

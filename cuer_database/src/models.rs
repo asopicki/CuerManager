@@ -27,6 +27,8 @@ pub struct Cuecard {
     pub karaoke_marks: String,
     pub music_file: String,
     pub file_path: String,
+    pub date_created: String,
+    pub date_modified: String,
 }
 
 #[derive(Insertable, AsChangeset, Debug)]
@@ -44,6 +46,8 @@ pub struct CuecardData<'a> {
     pub karaoke_marks: &'a str,
     pub music_file: &'a str,
     pub file_path: &'a str,
+    pub date_created: &'a str,
+    pub date_modified: &'a str,
 }
 
 impl<'a> CuecardData<'a> {
@@ -210,6 +214,7 @@ pub struct TipCuecard {
     pub tip_id: i32,
     pub cuecard_id: i32,
     pub sort_order: i32,
+    pub cued_at: Option<String>,
 }
 
 #[derive(Insertable, AsChangeset, Debug)]
@@ -218,6 +223,7 @@ pub struct TipCuecardData<'a> {
     pub tip_id: &'a i32,
     pub cuecard_id: &'a i32,
     pub sort_order: &'a i32,
+    pub cued_at: Option<String>,
 }
 
 impl<'a> TipCuecardData<'a> {

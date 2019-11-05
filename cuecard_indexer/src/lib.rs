@@ -12,6 +12,7 @@ extern crate log;
 extern crate cuer_database;
 extern crate filetime;
 extern crate uuid as uuidcrate;
+extern crate chrono;
 
 use self::cuer_database::*;
 use self::diesel::prelude::*;
@@ -21,6 +22,7 @@ use filetime::{set_file_mtime, FileTime};
 use regex::Regex;
 use uuidcrate::Uuid;
 use once_cell::unsync::Lazy;
+use chrono::prelude::*;
 
 use std::boxed::Box;
 use std::collections::HashMap;
@@ -285,6 +287,8 @@ fn index(connection: &SqliteConnection, file: &IndexFileData) {
         }
     };
 
+    let time = Utc::now();
+
     let values = CuecardData {
         uuid: &u.to_hyphenated().to_string(),
         phase: file.get_meta(MetaDataType::Phase).unwrap_or(&unphased),
@@ -300,6 +304,8 @@ fn index(connection: &SqliteConnection, file: &IndexFileData) {
         karaoke_marks: "",
         music_file: &file.get_meta(MetaDataType::MusicFile).unwrap_or(&empty),
         file_path: &file.file_path,
+        date_created: &time.format("%FT%T%.3fZ").to_string(),
+        date_modified: &time.format("%FT%T%.3fZ").to_string()
     };
     values.create(connection).unwrap();
 
@@ -328,6 +334,8 @@ fn update(connection: &SqliteConnection, file: &IndexFileData, cuecard: &Cuecard
         }
     };
 
+    let time = Utc::now();
+
     let values = CuecardData {
         uuid: &fileuuid,
         phase: file.get_meta(MetaDataType::Phase).unwrap_or(&unphased),
@@ -343,6 +351,8 @@ fn update(connection: &SqliteConnection, file: &IndexFileData, cuecard: &Cuecard
         karaoke_marks: "",
         music_file: &file.get_meta(MetaDataType::MusicFile).unwrap_or(&empty),
         file_path: &file.file_path,
+        date_created: &cuecard.date_created,
+        date_modified: &time.format("%FT%T%.3fZ").to_string()
     };
 
     values.update(cuecard, connection).unwrap();
