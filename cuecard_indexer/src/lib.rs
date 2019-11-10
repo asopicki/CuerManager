@@ -252,7 +252,7 @@ fn write_metadata_file(file: &IndexFileData) {
         music_file: Some(music_file.to_string())
     };
 
-    std::fs::write(file.metadata_file(), serde_json::to_string(&metadata).unwrap()).unwrap();
+    std::fs::write(file.metadata_file(), serde_json::to_string_pretty(&metadata).unwrap()).unwrap();
 }
 
 fn process_metadata_file(filepath: &PathBuf, data: &mut HashMap<MetaDataType, String>)  {

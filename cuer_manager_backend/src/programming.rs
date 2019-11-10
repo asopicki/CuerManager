@@ -50,6 +50,12 @@ pub fn create_tip(tip: &TipData, conn: &DBConnection) -> QueryResult<Tip> {
     tip.create(conn)
 }
 
+pub fn get_tip_by_uuid(tip_uuid: &str, conn: &DBConnection) -> QueryResult<Tip> {
+    use cuer_database::schema::tips::dsl::*;
+
+    tips.filter(uuid.eq(tip_uuid)).first::<Tip>(conn)
+}
+
 pub fn get_program_by_id(program_id: i32, conn: &DBConnection) -> QueryResult<Program> {
     use cuer_database::schema::programs::dsl::*;
 

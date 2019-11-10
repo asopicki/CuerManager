@@ -73,6 +73,15 @@ impl From<Tip> for FullTip {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct FormUpdateTip {
+    uuid: String,
+    name: String,
+    program_id: i32,
+    date_start: String,
+    date_end: String,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct FormTip {
     name: String,
     program_id: i32,
@@ -493,6 +502,29 @@ pub fn create_tip(tip: Json<FormTip>, conn: DbConn) -> Result<Json<FullTip>, Sta
     match result {
         Ok(result) => Ok(Json(FullTip::from(result))),
         Err(_) => Err(Status::BadRequest),
+    }
+}
+
+#[post("/v2/tips", format="application/json", data="<tip>")]
+pub fn update_tip(tip: Json<FormUpdateTip>, conn: DbConn) -> Result<Json<Tip>, Status> {
+    let data = tip.into_inner();
+
+    let tip = match programming::get_tip_by_uuid(&data.uuid, &conn) {
+        Ok(tip) => tip,
+        Err(_) => return Err(Status::NotFound)
+    };
+
+    let tip_data = TipData {
+        uuid: &tip.uuid,
+        name: &data.name,
+        program_id: &tip.program_id,
+        date_start: &data.date_start,
+        date_end: &data.date_end
+    };
+
+    match tip_data.update(&conn) {
+        Ok(tip) => Ok(Json(tip)),
+        Err(_err) => Err(Status::BadRequest)
     }
 }
 
