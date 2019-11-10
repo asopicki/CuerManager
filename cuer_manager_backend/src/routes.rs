@@ -1,15 +1,16 @@
+use crate::convert;
 use crate::cuecards;
 use crate::guards::BackendConfig;
 use crate::programming;
-use crate::convert;
 use comrak::{markdown_to_html, ComrakOptions};
 use cuer_database;
 use cuer_database::models::Cuecard;
 use cuer_database::models::{
-    CuecardData, Event, EventData, Program, ProgramData, Tag, Tip, TipCuecard, TipCuecardData, TipData,
+    CuecardData, Event, EventData, Program, ProgramData, Tag, Tip, TipCuecard, TipCuecardData,
+    TipData,
 };
-use uuidcrate::Uuid;
 use log::{error, info};
+use uuidcrate::Uuid;
 
 use std::convert::From;
 use std::io;
@@ -17,10 +18,10 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use tempfile;
 
+use rocket::data::Data;
 use rocket::http::Status;
 use rocket::response::{content, NamedFile};
 use rocket::State;
-use rocket::data::{Data};
 use rocket_contrib::json::Json;
 
 use chrono::prelude::*;
@@ -54,7 +55,7 @@ pub struct FullTip {
     date_start: String,
     date_end: String,
     cuecards: Vec<Cuecard>,
-    tip_cuecards: Vec<TipCuecard>
+    tip_cuecards: Vec<TipCuecard>,
 }
 
 impl From<Tip> for FullTip {
@@ -94,7 +95,7 @@ pub struct FormTipCuecard {
     tip_uuid: String,
     cuecard_uuid: String,
     sort_order: i32,
-    cued_at: Option<String>
+    cued_at: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -113,7 +114,6 @@ pub struct FormNotes {
     date_modified: String,
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct FormMetaData {
     choreographer: String,
@@ -123,7 +123,7 @@ pub struct FormMetaData {
     plusfigures: Option<String>,
     steplevel: Option<String>,
     music: Option<String>,
-    music_file: Option<String>
+    music_file: Option<String>,
 }
 
 #[get("/v2/cuecards/<uuid>/content")]
@@ -178,7 +178,11 @@ pub fn set_marks(uuid: String, marks: Json<FormCuecardMarks>, conn: DbConn) -> R
 }
 
 #[get("/v2/cuecards/<uuid>/metadata")]
-pub fn get_cuecard_metadata(uuid: String, conn: DbConn, config: State<BackendConfig>) -> Result<Json<FormMetaData>, Status> {
+pub fn get_cuecard_metadata(
+    uuid: String,
+    conn: DbConn,
+    config: State<BackendConfig>,
+) -> Result<Json<FormMetaData>, Status> {
     let cuecard = match cuer_database::cuecard_by_uuid(&uuid, &conn) {
         Ok(cuecard) => cuecard,
         Err(_) => return Err(Status::NotFound),
@@ -186,7 +190,9 @@ pub fn get_cuecard_metadata(uuid: String, conn: DbConn, config: State<BackendCon
 
     let base_path = PathBuf::from(&config.cuecards_lib_dir);
 
-    let path = base_path.join(PathBuf::from(cuecard.file_path)).with_extension(".meta.json");
+    let path = base_path
+        .join(PathBuf::from(cuecard.file_path))
+        .with_extension(".meta.json");
 
     if path.exists() {
         match serde_json::from_str::<FormMetaData>(&std::fs::read_to_string(path).unwrap()) {
@@ -201,8 +207,17 @@ pub fn get_cuecard_metadata(uuid: String, conn: DbConn, config: State<BackendCon
     }
 }
 
-#[post("/v2/cuecards/<uuid>/metadata", format="application/json", data = "<metadata>")]
-pub fn set_cuecard_metadata(uuid: String, metadata: Json<FormMetaData>, conn: DbConn, config: State<BackendConfig>) -> Result<(), Status> {
+#[post(
+    "/v2/cuecards/<uuid>/metadata",
+    format = "application/json",
+    data = "<metadata>"
+)]
+pub fn set_cuecard_metadata(
+    uuid: String,
+    metadata: Json<FormMetaData>,
+    conn: DbConn,
+    config: State<BackendConfig>,
+) -> Result<(), Status> {
     let data = metadata.into_inner();
 
     let cuecard = match cuer_database::cuecard_by_uuid(&uuid, &conn) {
@@ -212,7 +227,9 @@ pub fn set_cuecard_metadata(uuid: String, metadata: Json<FormMetaData>, conn: Db
 
     let base_path = PathBuf::from(&config.cuecards_lib_dir);
 
-    let path = base_path.join(PathBuf::from(&cuecard.file_path)).with_extension(".meta.json");
+    let path = base_path
+        .join(PathBuf::from(&cuecard.file_path))
+        .with_extension(".meta.json");
 
     let serialized_data = match serde_json::to_string(&data) {
         Ok(m) => m,
@@ -246,7 +263,7 @@ pub fn set_cuecard_metadata(uuid: String, metadata: Json<FormMetaData>, conn: Db
         music_file: &data.music_file.unwrap_or_default(),
         file_path: &cuecard.file_path,
         date_created: &cuecard.date_created,
-        date_modified: &time.format("%FT%T%.3fZ").to_string()
+        date_modified: &time.format("%FT%T%.3fZ").to_string(),
     };
 
     match cuecard_data.update(&cuecard, &conn) {
@@ -276,19 +293,17 @@ pub fn cued_at(uuid: String, conn: DbConn) -> Result<(), Status> {
                     tip_id: &tip_cuecard.tip_id,
                     cuecard_id: &cuecard.id,
                     sort_order: &tip_cuecard.sort_order,
-                    cued_at: Some(time.format("%FT%T%.3fZ").to_string())
+                    cued_at: Some(time.format("%FT%T%.3fZ").to_string()),
                 };
 
                 match programming::update_tip_cuecard(&tip_cuecard_data, &conn) {
                     Ok(_) => (),
-                    Err(_) => {
-                        return Err(Status::BadRequest)
-                    }
+                    Err(_) => return Err(Status::BadRequest),
                 }
             }
             Ok(())
-        },
-        Err(_) => Err(Status::BadRequest)
+        }
+        Err(_) => Err(Status::BadRequest),
     }
 }
 
@@ -472,7 +487,8 @@ pub fn get_tips(program_id: i32, conn: DbConn) -> Result<Json<Vec<FullTip>>, Sta
                 let cuecards =
                     programming::get_cuecards(&tip, &conn).unwrap_or_else(|_| Vec::new());
 
-                let tip_cuecards = programming::get_tip_cuecards(&tip, &conn).unwrap_or_else(|_| Vec::new());
+                let tip_cuecards =
+                    programming::get_tip_cuecards(&tip, &conn).unwrap_or_else(|_| Vec::new());
 
                 let mut full_tip = FullTip::from(tip);
                 full_tip.cuecards = cuecards;
@@ -505,13 +521,13 @@ pub fn create_tip(tip: Json<FormTip>, conn: DbConn) -> Result<Json<FullTip>, Sta
     }
 }
 
-#[post("/v2/tips", format="application/json", data="<tip>")]
+#[post("/v2/tips", format = "application/json", data = "<tip>")]
 pub fn update_tip(tip: Json<FormUpdateTip>, conn: DbConn) -> Result<Json<Tip>, Status> {
     let data = tip.into_inner();
 
     let tip = match programming::get_tip_by_uuid(&data.uuid, &conn) {
         Ok(tip) => tip,
-        Err(_) => return Err(Status::NotFound)
+        Err(_) => return Err(Status::NotFound),
     };
 
     let tip_data = TipData {
@@ -519,12 +535,12 @@ pub fn update_tip(tip: Json<FormUpdateTip>, conn: DbConn) -> Result<Json<Tip>, S
         name: &data.name,
         program_id: &tip.program_id,
         date_start: &data.date_start,
-        date_end: &data.date_end
+        date_end: &data.date_end,
     };
 
     match tip_data.update(&conn) {
         Ok(tip) => Ok(Json(tip)),
-        Err(_err) => Err(Status::BadRequest)
+        Err(_err) => Err(Status::BadRequest),
     }
 }
 
@@ -564,7 +580,7 @@ pub fn create_tip_cuecard(
         tip_id: &tip.id,
         cuecard_id: &cuecard.id,
         sort_order: &data.sort_order,
-        cued_at: None
+        cued_at: None,
     };
 
     let result = programming::create_tip_cuecard(&tip_cuecard_data, &conn);
@@ -596,7 +612,7 @@ pub fn update_tip_cuecard(
         tip_id: &tip.id,
         cuecard_id: &cuecard.id,
         sort_order: &data.sort_order,
-        cued_at: data.cued_at
+        cued_at: data.cued_at,
     };
 
     let result = programming::update_tip_cuecard(&tip_cuecard_data, &conn);
@@ -635,7 +651,7 @@ pub fn remove_tip_cuecard(
         tip_id: &tip_cuecard.tip_id,
         cuecard_id: &tip_cuecard.cuecard_id,
         sort_order: &tip_cuecard.sort_order,
-        cued_at: tip_cuecard.cued_at
+        cued_at: tip_cuecard.cued_at,
     };
 
     let result = programming::remove_tip_cuecard(&tip_cuecard_data, &conn);
@@ -808,14 +824,20 @@ impl<'r> rocket::response::Responder<'r> for MarkdownFile {
     fn respond_to(self, req: &rocket::request::Request) -> rocket::response::Result<'r> {
         rocket::response::Response::build_from(self.0.respond_to(req)?)
             .raw_header("Content-Type", "text/markdown")
-            .raw_header("Content-Disposition", "attachment; filename=\"converted.md\"")
+            .raw_header(
+                "Content-Disposition",
+                "attachment; filename=\"converted.md\"",
+            )
             .ok()
     }
 }
 
-#[post("/v2/convert/odt", format="application/octet-stream", data="<data>")]
+#[post(
+    "/v2/convert/odt",
+    format = "application/octet-stream",
+    data = "<data>"
+)]
 pub fn convert_odt_file(data: Data) -> Result<MarkdownFile, Status> {
-
     let src_file = tempfile::NamedTempFile::new().unwrap();
     let file = std::fs::File::create(&src_file).unwrap();
 
@@ -838,18 +860,15 @@ pub fn convert_odt_file(data: Data) -> Result<MarkdownFile, Status> {
     let file = std::fs::File::open(src_file).unwrap();
     let mut reader = std::io::BufReader::new(file);
 
-
     let target = tempfile::Builder::new().suffix(".md").tempfile().unwrap();
     let target_file = std::fs::File::create(&target).unwrap();
     let mut writer = std::io::BufWriter::new(target_file);
 
     match convert::convert_to_markdown(&mut reader, &mut writer) {
-        Ok(_) => {
-            match NamedFile::open(target) {
-                Ok(file) => Ok(MarkdownFile(file)),
-                Err(_) => Err(Status::BadRequest)
-            }
-        }
-        Err(_) => Err(Status::BadRequest)
+        Ok(_) => match NamedFile::open(target) {
+            Ok(file) => Ok(MarkdownFile(file)),
+            Err(_) => Err(Status::BadRequest),
+        },
+        Err(_) => Err(Status::BadRequest),
     }
 }

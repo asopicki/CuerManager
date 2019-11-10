@@ -1,44 +1,38 @@
+use log::error;
 use std::io::*;
 use xml::reader::{EventReader, XmlEvent};
-use log::{error};
 
 fn matches_part_title(s: &str) -> bool {
     let t = s.to_lowercase();
 
-    if t.starts_with("intro") {
-        return true
-    } else if t.starts_with("part") {
-        return true
-    } else if t.starts_with("int") {
-        return true
-    } else if t.starts_with("bridge") || t.starts_with("bdg") {
-        return true
-    } else if t.starts_with("end") {
-        return true
-    } else if t.starts_with("a ") {
-        return true
-    } else if t.starts_with("b ") {
-        return true
-    } else if t.starts_with("c ") {
-        return true
-    } else if t.starts_with("d ") {
-        return true
-    } else if t.starts_with("e ") {
-        return true
-    } else if t.starts_with("f ") {
-        return true
+    if t.starts_with("intro")
+        || t.starts_with("part")
+        || t.starts_with("int")
+        || t.starts_with("bridge")
+        || t.starts_with("bdg")
+        || t.starts_with("end")
+        || t.starts_with("a ")
+        || t.starts_with("b ")
+        || t.starts_with("c ")
+        || t.starts_with("d ")
+        || t.starts_with("e ")
+        || t.starts_with("f ")
+    {
+        return true;
     }
     false
 }
 
 pub fn convert_to_markdown<R, W>(input: &mut R, writer: &mut W) -> Result<()>
-    where R: Read + Seek, W: Write  {
-
+where
+    R: Read + Seek,
+    W: Write,
+{
     let mut archive = match zip::read::ZipArchive::new(input) {
         Ok(archive) => archive,
         Err(err) => {
             error!("Unable to read archive: {:?}", err);
-            return Err(Error::new(ErrorKind::InvalidData, err))
+            return Err(Error::new(ErrorKind::InvalidData, err));
         }
     };
 
@@ -47,7 +41,7 @@ pub fn convert_to_markdown<R, W>(input: &mut R, writer: &mut W) -> Result<()>
     let mut new_line = false;
     let mut new_part = false;
     let mut sequence = false;
-    
+
     if let Ok(result) = archive.by_name("content.xml") {
         let reader = BufReader::new(result);
 
@@ -62,12 +56,12 @@ pub fn convert_to_markdown<R, W>(input: &mut R, writer: &mut W) -> Result<()>
                     match name.local_name.as_ref() {
                         "s" => {
                             // depth += 1;
-                            relevant_element= true;
+                            relevant_element = true;
                         }
                         "p" => {
                             // println!("{}", name.local_name);
                             // depth += 1;
-                            relevant_element= true;
+                            relevant_element = true;
                             new_line = true;
                         }
                         "h" => {
@@ -78,9 +72,9 @@ pub fn convert_to_markdown<R, W>(input: &mut R, writer: &mut W) -> Result<()>
                         "span" => {
                             // println!("{}{}", indent(depth), name.local_name);
                             // depth += 1;
-                            relevant_element= true;
+                            relevant_element = true;
                         }
-                        _ => ()
+                        _ => (),
                     }
                 }
                 Ok(XmlEvent::Characters(s)) => {
@@ -96,30 +90,29 @@ pub fn convert_to_markdown<R, W>(input: &mut R, writer: &mut W) -> Result<()>
                         } else if new_part {
                             // println!("");
                             // print!("# {}", s);
-                            writeln!(writer, "").unwrap();
+                            writeln!(writer).unwrap();
                             write!(writer, "# {}", s).unwrap();
                             new_part = false;
                         } else if matches_part_title(&s) && !sequence {
                             // println!("");
                             // print!("# {}", s);
-                            writeln!(writer, "").unwrap();
+                            writeln!(writer).unwrap();
                             write!(writer, "# {}", s).unwrap();
-                        } else if s.contains(";") {
+                        } else if s.contains(';') {
                             if new_line {
                                 // println!("");
                                 // print!("> ");
-                                writeln!(writer, "").unwrap();
+                                writeln!(writer).unwrap();
                                 write!(writer, "> ").unwrap();
                                 new_line = false;
                             }
                             let text = s.replace("\n", "").replace("\r", "");
                             // print!("{}", text);
                             write!(writer, "{}", text).unwrap();
-                        }
-                        else {
+                        } else {
                             if new_line {
                                 // println!("");
-                                writeln!(writer, "").unwrap();
+                                writeln!(writer).unwrap();
                             }
                             let text = s.replace("\n", "").replace("\r", "");
                             // print!("{}", text);
@@ -130,18 +123,18 @@ pub fn convert_to_markdown<R, W>(input: &mut R, writer: &mut W) -> Result<()>
                 Ok(XmlEvent::EndElement { name }) => {
                     match name.local_name.as_ref() {
                         "p" => {
-                            relevant_element= false;
-                            // println!("");
-                            writeln!(writer, "").unwrap();
-                            sequence = false;
-                        }
-                        "h" =>  {
                             relevant_element = false;
                             // println!("");
-                            writeln!(writer, "").unwrap();
+                            writeln!(writer).unwrap();
                             sequence = false;
                         }
-                        _ => ()
+                        "h" => {
+                            relevant_element = false;
+                            // println!("");
+                            writeln!(writer).unwrap();
+                            sequence = false;
+                        }
+                        _ => (),
                     }
                 }
                 Err(e) => {

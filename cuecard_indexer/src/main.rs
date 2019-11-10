@@ -1,10 +1,10 @@
 #![warn(clippy::all)]
-extern crate structopt;
 extern crate cuecard_indexer;
 extern crate env_logger;
+extern crate structopt;
 
-use structopt::StructOpt;
 use std::path::PathBuf;
+use structopt::StructOpt;
 
 use std::env;
 
@@ -18,7 +18,7 @@ struct ProgramOptions {
 
     #[structopt(parse(from_os_str))]
     /// Sets the base directory for the cue card collection
-    input: PathBuf
+    input: PathBuf,
 }
 
 fn main() {
@@ -26,13 +26,17 @@ fn main() {
     let options = ProgramOptions::from_args();
 
     let database_url = match options.database {
-        Some(opt) => opt.to_string(),
-        _ => env::var("DATABASE_URL").expect("DATABASE_URL must be set")
+        Some(opt) => opt,
+        _ => env::var("DATABASE_URL").expect("DATABASE_URL must be set"),
     };
 
     let config = cuecard_indexer::Config {
-        basepath: options.input.to_str().expect("Base directory of the cue card collection exptected").to_string(),
-        database_url
+        basepath: options
+            .input
+            .to_str()
+            .expect("Base directory of the cue card collection exptected")
+            .to_string(),
+        database_url,
     };
 
     cuecard_indexer::run(&config);

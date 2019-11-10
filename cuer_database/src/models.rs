@@ -189,7 +189,11 @@ pub struct TipData<'a> {
 impl<'a> TipData<'a> {
     pub fn update(&self, conn: &SqliteConnection) -> QueryResult<Tip> {
         use crate::schema::tips::dsl::*;
-        update(tips).set(self).filter(uuid.eq(self.uuid)).execute(conn).unwrap();
+        update(tips)
+            .set(self)
+            .filter(uuid.eq(self.uuid))
+            .execute(conn)
+            .unwrap();
 
         tips.filter(uuid.eq(self.uuid)).get_result(conn)
     }

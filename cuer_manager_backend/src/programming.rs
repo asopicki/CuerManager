@@ -117,7 +117,6 @@ pub fn get_cuecards(tip: &Tip, conn: &DBConnection) -> QueryResult<Vec<Cuecard>>
         .load::<Cuecard>(conn)
 }
 
-
 pub fn get_tip_cuecards(tip: &Tip, conn: &DBConnection) -> QueryResult<Vec<TipCuecard>> {
     cuer_database::schema::tip_cuecards::table
         .filter(cuer_database::schema::tip_cuecards::columns::tip_id.eq(tip.id))

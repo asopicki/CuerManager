@@ -15,14 +15,14 @@ extern crate comrak;
 extern crate cuer_database;
 extern crate dirs;
 extern crate duct;
+extern crate log;
 extern crate serde;
 extern crate serde_json;
+extern crate tempfile;
 extern crate unescape;
 extern crate uuid as uuidcrate;
-extern crate log;
-extern crate zip;
 extern crate xml;
-extern crate tempfile;
+extern crate zip;
 
 #[macro_use]
 extern crate diesel_migrations;
@@ -30,11 +30,11 @@ extern crate diesel_migrations;
 #[cfg(test)]
 mod tests;
 
+mod convert;
 mod cuecards;
 mod guards;
 mod programming;
 mod routes;
-mod convert;
 
 use rocket::fairing::AdHoc;
 use rocket_contrib::databases::diesel;

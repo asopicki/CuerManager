@@ -134,7 +134,11 @@ fn cuecards_content_search(q: &str, conn: &DBConnection) -> QueryResult<Vec<Cuec
         .load::<Cuecard>(conn)
 }
 
-pub fn get_tip_cuecard_to_current_event(cuecard: &Cuecard, timestamp: &str, conn: &DBConnection) -> QueryResult<Vec<TipCuecard>> {
+pub fn get_tip_cuecard_to_current_event(
+    cuecard: &Cuecard,
+    timestamp: &str,
+    conn: &DBConnection,
+) -> QueryResult<Vec<TipCuecard>> {
     use cuer_database::schema::*;
 
     tip_cuecards::table
