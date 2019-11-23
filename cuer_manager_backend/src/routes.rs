@@ -885,7 +885,8 @@ pub enum MusicFileType {
 pub struct MusicFileEntry {
     file_name: String,
     file_type: MusicFileType,
-    parent_path: String
+    parent_path: String,
+    separator: String
 }
 
 #[post("/v2/music_files", format="application/json", data="<filedata>")]
@@ -926,7 +927,8 @@ pub fn list_music_files(filedata: Json<FormFilename>, config: State<BackendConfi
                 let music_file_entry = MusicFileEntry {
                     file_name: e.path().display().to_string().replace(&path.display().to_string(), "").trim_start_matches('/').to_string(),
                     file_type,
-                    parent_path: path.display().to_string().replace(&base_path.display().to_string(), "").trim_start_matches('/').to_string()
+                    parent_path: path.display().to_string().replace(&base_path.display().to_string(), "").trim_start_matches('/').to_string(),
+                    separator: std::path::MAIN_SEPARATOR.to_string()
                 };
 
                 
