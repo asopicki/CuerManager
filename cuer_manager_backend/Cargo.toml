@@ -1,6 +1,6 @@
 [package]
 name = "cuer_manager"
-version = "1.6.1"
+version = "1.7.0"
 authors = ["Alexander Sopicki"]
 edition = "2018"
 
