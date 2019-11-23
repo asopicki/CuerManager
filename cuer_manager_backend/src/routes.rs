@@ -34,6 +34,7 @@ use super::DbConn;
 use diesel::QueryResult;
 
 use diesel_migrations::{any_pending_migrations, run_pending_migrations};
+use walkdir::WalkDir;
 
 #[derive(Serialize, Deserialize)]
 pub struct FormEvent<'a> {
@@ -282,7 +283,7 @@ pub fn cued_at(uuid: String, conn: DbConn) -> Result<(), Status> {
         Err(_) => return Err(Status::NotFound),
     };
 
-    let time = Utc::now();
+    let time = Local::now();
 
     let timestamp = time.format("%FT%T").to_string();
 
@@ -871,4 +872,67 @@ pub fn convert_odt_file(data: Data) -> Result<MarkdownFile, Status> {
         },
         Err(_) => Err(Status::BadRequest),
     }
+}
+
+#[derive(Serialize, Deserialize)]
+pub enum MusicFileType {
+    File,
+    Directory,
+    Symlink
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct MusicFileEntry {
+    file_name: String,
+    file_type: MusicFileType,
+    parent_path: String
+}
+
+#[post("/v2/music_files", format="application/json", data="<filedata>")]
+pub fn list_music_files(filedata: Json<FormFilename>, config: State<BackendConfig>)  -> Result<Json<Vec<MusicFileEntry>>, Status> {
+    let filedata = filedata.into_inner();
+
+    let file_name = match String::from_utf8(decode(&filedata.filename).unwrap()) {
+        Ok(s) => s,
+        Err(_) => return Ok(Json(Vec::default())),
+    };
+
+    let file_name = file_name.trim_end();
+    let file_path = Path::new(&file_name);
+
+    let base_path = Path::new(&config.music_files_dir);
+    let path = Path::new(&config.music_files_dir).join(file_path);
+    
+    info!("{:?}", path);
+
+    let mut path_names: Vec<MusicFileEntry> = vec![];
+    let mut skip_first = true;
+
+    for entry in WalkDir::new(path.clone()).min_depth(0).max_depth(1).follow_links(true)
+        .sort_by(|a,b| a.file_name().cmp(b.file_name())) {
+            if !entry.is_err() {
+                if skip_first {
+                    skip_first = false;
+                    continue;
+                }
+                let e = entry.unwrap();
+
+                let mut file_type = MusicFileType::File;
+
+                if e.file_type().is_dir() {
+                    file_type = MusicFileType::Directory;
+                }
+
+                let music_file_entry = MusicFileEntry {
+                    file_name: e.path().display().to_string().replace(&path.display().to_string(), "").trim_start_matches('/').to_string(),
+                    file_type,
+                    parent_path: path.display().to_string().replace(&base_path.display().to_string(), "").trim_start_matches('/').to_string()
+                };
+
+                
+                path_names.push(music_file_entry);
+            }
+    }
+
+    Ok(Json(path_names))
 }

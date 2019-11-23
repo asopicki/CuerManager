@@ -23,6 +23,7 @@ extern crate unescape;
 extern crate uuid as uuidcrate;
 extern crate xml;
 extern crate zip;
+extern crate walkdir;
 
 #[macro_use]
 extern crate diesel_migrations;
@@ -86,7 +87,8 @@ fn rocket() -> rocket::Rocket {
                 routes::get_tags,
                 routes::add_tag,
                 routes::remove_tag,
-                routes::convert_odt_file
+                routes::convert_odt_file,
+                routes::list_music_files
             ],
         )
         .attach(AdHoc::on_attach("Backend Config", |rocket| {
