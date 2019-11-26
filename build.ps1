@@ -1,3 +1,9 @@
+Param(
+    [Parameter(Mandatory=$true)]
+    [String]
+    $Build
+)
+
 Set-Location $PSScriptRoot
 
 Remove-Item dist -Recurse -ErrorAction Ignore
@@ -43,5 +49,15 @@ Copy-Item .\win\Rocket.toml.default dist\CuerManager
 Copy-Item .\win\cuer_manager.bat dist\CuerManager
 
 Write-Host "Creating distribution folder complete"
+
+Write-Host "Creating zip file"
+
+$compress = @{
+LiteralPath= "dist\CuerManager"
+CompressionLevel = "Fastest"
+DestinationPath = ".\CuerManager-$Build.zip"
+}
+
+Compress-Archive @compress
 
 Write-Host "Finished"
