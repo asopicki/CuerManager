@@ -387,6 +387,18 @@ fn update(connection: &SqliteConnection, file: &IndexFileData, cuecard: &Cuecard
 
     let time = Utc::now();
 
+    let mut karaoke_marks = "";
+
+    if !cuecard.karaoke_marks.is_empty() {
+        karaoke_marks = &cuecard.karaoke_marks;
+    }
+
+    let mut music_file = *(&file.get_meta(MetaDataType::MusicFile).unwrap_or(&empty));
+
+    if !cuecard.music_file.is_empty() {
+        music_file = &cuecard.music_file;
+    }
+
     let values = CuecardData {
         uuid: &fileuuid,
         phase: file.get_meta(MetaDataType::Phase).unwrap_or(&unphased),
@@ -399,8 +411,8 @@ fn update(connection: &SqliteConnection, file: &IndexFileData, cuecard: &Cuecard
         difficulty: file.get_meta(MetaDataType::Difficulty).unwrap_or(&empty),
         meta: &metadata,
         content: &file.content,
-        karaoke_marks: "",
-        music_file: &file.get_meta(MetaDataType::MusicFile).unwrap_or(&empty),
+        karaoke_marks,
+        music_file,
         file_path: &file.file_path,
         date_created: &cuecard.date_created,
         date_modified: &time.format("%FT%T%.3fZ").to_string(),

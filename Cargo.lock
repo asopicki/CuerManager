@@ -290,7 +290,7 @@ dependencies = [
 
 [[package]]
 name = "cuecard_indexer"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "chrono 0.4.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "cuer_database 0.9.0",
@@ -320,7 +320,7 @@ dependencies = [
 
 [[package]]
 name = "cuer_manager"
-version = "1.7.4"
+version = "1.7.5"
 dependencies = [
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono 0.4.9 (registry+https://github.com/rust-lang/crates.io-index)",
