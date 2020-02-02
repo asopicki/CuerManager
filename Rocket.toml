@@ -2,7 +2,8 @@
 address = "localhost"
 music_files_dir = "/home/music/collection"
 indexer_path = "target/debug/cuecard_indexer"
-cuecards_lib_dir = "/home/alex/Round"
+cuecards_lib_dir = "/home/alex/projects/CuerManager/cuecards"
+cuecards_self_managed = false
 
 [development]
 port = 8087

@@ -1,6 +1,6 @@
 use crate::convert;
 use crate::cuecards;
-use crate::guards::BackendConfig;
+use crate::guards::{BackendConfig, FileNameHeader};
 use crate::programming;
 use comrak::{markdown_to_html, ComrakOptions};
 use cuer_database;
@@ -706,19 +706,30 @@ pub fn audio_file(filedata: Json<FormFilename>, config: State<BackendConfig>) ->
     NamedFile::open(path).ok()
 }
 
-#[post("/v2/cuecards/refresh")]
-pub fn refresh_cuecards_library(config: State<BackendConfig>) -> Result<(), Status> {
+fn refresh_library(config: State<BackendConfig>) -> io::Result<()> {
     let cmd = cmd!(
         String::from(&config.indexer_path),
         "--database",
         String::from(&config.db_url),
         String::from(&config.cuecards_lib_dir)
     )
-    .env("DATABASE_URL", String::from(&config.db_url));
+    .env("DATABASE_URL", String::from(&config.db_url))
+    .stdout_capture();
 
-    match cmd.run() {
+    let output = cmd.read()?;
+    info!("{}", output);
+    Ok(())
+}
+
+#[post("/v2/cuecards/refresh")]
+pub fn refresh_cuecards_library(config: State<BackendConfig>) -> Result<(), Status> {
+
+    match refresh_library(config)  {
         Ok(_) => Ok(()),
-        Err(_) => Err(Status::BadRequest),
+        Err(result) => {
+            error!("Error refreshing cuecards library: {}", result);
+            Err(Status::BadRequest)
+        }
     }
 }
 
@@ -833,12 +844,39 @@ impl<'r> rocket::response::Responder<'r> for MarkdownFile {
     }
 }
 
+fn error_response<'r>(status: Status) -> rocket::Response<'r>  {
+    let response = rocket::Response::build()
+        .status(status)
+        .finalize();
+
+    response
+}
+
+fn file_response<'r>(file: MarkdownFile, filename: &str) -> rocket::Response<'r> {
+    rocket::Response::build()
+        .streamed_body(file.0)
+        .raw_header("Content-Type", "text/markdown")
+        .raw_header(
+            "Content-Disposition",
+            format!("attachment; filename=\"{}\"", filename)
+        )
+        .status(Status::Ok)
+        .finalize()
+
+}
+
+fn empty_file_response<'r>() -> rocket::Response<'r> {
+    rocket::Response::build()
+        .status(Status::Ok)
+        .finalize()
+}
+
 #[post(
     "/v2/convert/odt",
     format = "application/octet-stream",
     data = "<data>"
 )]
-pub fn convert_odt_file(data: Data) -> Result<MarkdownFile, Status> {
+pub fn convert_odt_file<'r>(data: Data, filename: FileNameHeader, config: State<BackendConfig>) -> rocket::Response<'r> {
     let src_file = tempfile::NamedTempFile::new().unwrap();
     let file = std::fs::File::create(&src_file).unwrap();
 
@@ -847,14 +885,14 @@ pub fn convert_odt_file(data: Data) -> Result<MarkdownFile, Status> {
         Ok(size) => info!("Saved {} bytes to temporary file", size),
         Err(error) => {
             error!("Error writing to temporary file: {:?}", error);
-            return Err(Status::BadRequest);
+            return error_response(Status::BadRequest);
         }
     }
     match writer.flush() {
         Ok(_) => (),
         Err(err) => {
             error!("Error flushing output file: {:?}", err);
-            return Err(Status::BadRequest);
+            return error_response(Status::BadRequest);
         }
     }
 
@@ -866,11 +904,40 @@ pub fn convert_odt_file(data: Data) -> Result<MarkdownFile, Status> {
     let mut writer = std::io::BufWriter::new(target_file);
 
     match convert::convert_to_markdown(&mut reader, &mut writer) {
-        Ok(_) => match NamedFile::open(target) {
-            Ok(file) => Ok(MarkdownFile(file)),
-            Err(_) => Err(Status::BadRequest),
+        Ok(_) => {
+            if config.cuecards_self_managed {
+                match NamedFile::open(target) {
+                    Ok(file) => {
+                        let mut p = PathBuf::new();
+                        p.push(&filename.0);
+                        p.set_extension("md");
+
+                        file_response(MarkdownFile(file), p.to_str().unwrap())
+                    },
+                    Err(_) => error_response(Status::BadRequest),
+                }
+            } else {
+                let mut p = PathBuf::new();
+                p.push(&config.cuecards_lib_dir);
+                p.push(format!("{}", filename.0.to_lowercase().chars().nth(0).unwrap()));
+                p.push(&filename.0);
+                p.set_extension("md");
+                info!("Path: {:?}", p);
+                let mut builder = std::fs::DirBuilder::new();
+                builder.recursive(true).create(p.as_path().parent().unwrap()).unwrap();
+                writer.flush().unwrap();
+                std::fs::copy(target, p.as_path()).unwrap();
+
+                match refresh_library(config) {
+                    Ok(_) => empty_file_response(),
+                    Err(_) => error_response(Status::BadRequest)
+                }
+            }
         },
-        Err(_) => Err(Status::BadRequest),
+        Err(error) => {
+            error!("Error converting file to markdown: {}", error);
+            error_response(Status::BadRequest)
+        },
     }
 }
 

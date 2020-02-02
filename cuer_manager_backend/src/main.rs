@@ -116,11 +116,17 @@ fn rocket() -> rocket::Rocket {
                 .unwrap_or("library.db")
                 .to_string();
 
+            let cuecards_self_managed: bool = rocket
+                .config()
+                .get_bool("cuecards_self_managed")
+                .unwrap_or(false);
+
             Ok(rocket.manage(BackendConfig {
                 music_files_dir,
                 cuecards_lib_dir,
                 indexer_path,
                 db_url,
+                cuecards_self_managed
             }))
         }))
 }
