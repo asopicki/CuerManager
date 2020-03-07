@@ -60,6 +60,7 @@ fn rocket() -> rocket::Rocket {
                 routes::get_cuecard_by_uuid,
                 routes::cued_at,
                 routes::cuecard_content_by_uuid,
+                routes::post_cuecard_content_by_uuid,
                 routes::get_cuecard_metadata,
                 routes::set_cuecard_metadata,
                 routes::refresh_cuecards_library,

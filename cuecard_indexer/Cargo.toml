@@ -19,3 +19,6 @@ env_logger = "0.7"
 cuer_database = { path="../cuer_database" }
 structopt = { version = "0.3", default-features = false }
 chrono = "0.4"
+
+[profile.release]
+debug=false

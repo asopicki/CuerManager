@@ -27,6 +27,7 @@ fn matches_part_title(s: &str) -> bool {
 struct State {
     pub has_title: bool,
     pub relevant_element: bool,
+    pub ignore_content: bool,
     pub new_line: bool,
     pub new_part: bool,
     pub sequence: bool
@@ -73,6 +74,9 @@ where
                             write!(writer, " ").unwrap();
                             info!(" ");
                         }
+                        "a" => {
+                            state.ignore_content = true;
+                        }
                         "p" => {
                             state.relevant_element = true;
                             state.new_line = true;
@@ -88,12 +92,16 @@ where
                     }
                 }
                 Ok(XmlEvent::Characters(s)) => {
-                    if state.relevant_element {
+                    if state.relevant_element && !state.ignore_content {
                         text_parts.push(s);
                     }
                 }
                 Ok(XmlEvent::EndElement { name }) => {
                     match name.local_name.as_ref() {
+                        "a" => {
+                            state.ignore_content = false;
+                            text_parts = Vec::with_capacity(capacity);
+                        }
                         "p" => {
                             write_text_parts(&text_parts, &mut *writer, & mut state);
                             state.relevant_element = false;

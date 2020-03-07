@@ -127,6 +127,11 @@ pub struct FormMetaData {
     music_file: Option<String>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct FormCuecardContent {
+    content: String
+}
+
 #[get("/v2/cuecards/<uuid>/content")]
 pub fn cuecard_content_by_uuid(
     uuid: String,
@@ -149,6 +154,31 @@ pub fn cuecard_content_by_uuid(
         }
         _ => Err(Status::NotFound),
     }
+}
+
+#[post("/v2/cuecards/<uuid>/content", format="application/json", data="<content>")]
+pub fn post_cuecard_content_by_uuid(uuid: String, content: Json<FormCuecardContent>, conn: DbConn, config: State<BackendConfig>) -> Result<(), Status> {
+    let data = content.into_inner();
+
+    let cuecard = match cuer_database::cuecard_by_uuid(&uuid, &conn) {
+        Ok(cuecard) => cuecard,
+        Err(_) => return Err(Status::NotFound),
+    };
+
+    match programming::set_content(cuecard.id, &data.content, &conn) {
+        Ok(_) => (),
+        Err(_) => return Err(Status::BadRequest),
+    }
+
+    let mut path = PathBuf::from(&config.cuecards_lib_dir);
+    path.push(&cuecard.file_path);
+
+    match std::fs::write(path, data.content) {
+        Ok(_) => (),
+        Err(_) => return Err(Status::BadRequest)
+    }
+
+    Ok(())
 }
 
 #[get("/v2/cuecards/<uuid>")]

@@ -132,3 +132,11 @@ pub fn set_marks(c_id: i32, marks: &str, conn: &DBConnection) -> QueryResult<usi
         .set(karaoke_marks.eq(marks))
         .execute(conn)
 }
+
+pub fn set_content(c_id: i32, markdown: &str, conn: &DBConnection) -> QueryResult<usize> {
+    use cuer_database::schema::cuecards::dsl::*;
+
+    diesel::update(cuecards.filter(id.eq(c_id)))
+        .set(content.eq(markdown))
+        .execute(conn)
+}
