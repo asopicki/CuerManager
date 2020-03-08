@@ -1,0 +1,46 @@
+<details>
+    <summary>Filter:</summary>
+    <div class="search-form">
+        <form [formGroup]="searchForm" class="form-control" novalidate>
+            <div class="search-control">
+            <label for="phase">
+                Search by phase:
+                <button mat-raised-button *ngFor="let phase of phases;" (click)="searchPhase(phase)" id="phase">Phase {{phase}}</button>
+            </label>
+            </div>
+            <div class="search-control">
+            <label for="phrase">
+                Search by title or figure:
+                <input matInput placeholder="Enter title to search for" id="phrase" formControlName="title" >
+            </label>
+            </div>
+            <div class="search-control">
+            <label for="rhythm">
+                Search by rhythm:
+                <mat-select (selectionChange)="rhythmChanged($event)" placeholder="Select rhythm to search for" formControlName="rhythm" id="rhythm">
+                    <mat-option></mat-option>
+                    <mat-option *ngFor="let rhythm of rhythms" value="{{rhythm}}">{{rhythm}}</mat-option>
+                </mat-select>
+            </label>
+            <label for="reset">
+                Reset filter:
+                <button mat-raised-button (click)="resetFilter()">Reset</button>
+            </label>
+            </div>
+        </form>
+    </div>
+</details>
+<div>
+    Convert ODT file:
+    <input type="file" id="odtfile" hidden="true" (change)="convertFile($event)">
+    <button mat-raised-button (click)="selectFile()">Convert</button>
+</div>
+<mat-list class="list">
+    <cdk-virtual-scroll-viewport itemSize="60" class="list-viewport">
+        <mat-list-item *cdkVirtualFor="let cuecard of cuecards; templateCacheSize: 100" class="cuecard">
+            <app-cuecard-card [cuecard]="cuecard" class="item" (dblclick)="open(cuecard)" [tagsedit]="true" [showIssues]="true"
+                [canEdit]="true" (edit)="onedit(cuecard)">
+            </app-cuecard-card>
+        </mat-list-item>
+    </cdk-virtual-scroll-viewport>
+</mat-list>

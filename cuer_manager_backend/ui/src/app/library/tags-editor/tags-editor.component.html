@@ -1,0 +1,33 @@
+<form [formGroup]="newTagGroup" class="form-control" novalidate>
+    <h1 mat-dialog-title>Edit tags</h1>
+    <div mat-dialog-content>
+        <h3>{{cueCard.title}}</h3>
+        <mat-chip-list #taglist aria-label="Cuecard tag list">
+            <mat-chip *ngFor="let tag of tags" 
+                [removable]="isRemovable"
+                (removed)="removeTag(tag)">
+                {{tag.tag}}
+                <span matChipRemove *ngIf="isRemovable"  class="fas fa-minus"></span>
+            </mat-chip>
+        </mat-chip-list>
+        <p>
+            <input
+                placeholder="New tag..."
+                #tagInput
+                [formControl]="tag"
+                [matChipInputFor]="taglist"
+                [matAutocomplete]="tagauto"
+                [matChipInputSeparatorKeyCodes]="keyCodes"
+                [matChipInputAddOnBlur]="addOnBlur"
+                (matChipInputTokenEnd)="addTag($event)" />
+            <mat-autocomplete #tagauto="matAutocomplete" (optionSelected)="selected($event)">
+                    <mat-option *ngFor="let tagname of filteredTags | async" [value]="tagname">
+                        {{tagname}}
+                    </mat-option>
+            </mat-autocomplete>
+        </p>
+    </div>
+    <div mat-dialog-actions>
+        <button mat-button (click)="onCloseClick()">Close</button>
+    </div>
+</form>

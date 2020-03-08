@@ -1,0 +1,63 @@
+@import 'abstracts/variables';
+
+.panel {
+    width: 100%;
+}
+
+.event.panel {
+    padding: 20px;
+    text-align: center;
+    color: black;
+    margin-bottom: 0.9em;
+}
+
+.textbold {
+    font-style: italic;
+    font-weight: bold;
+}
+
+.item {
+    width: 100%;
+}
+
+.cuecard {
+    height: 100% !important;
+    width: 100%;
+}
+
+.tips-container table {
+    width: 100%;
+    border: 2px solid black;
+    border-collapse: collapse;
+}
+
+.tips-container th, td {
+    border: 1px solid black;
+}
+
+.tips-container thead > tr > th {
+    background-color: $primary;
+    font-size: 18px;
+    border-bottom: 2px solid $primary-dark;
+    color: white;
+}
+
+.tips-container table tr:hover {
+    background-color: $primary-dark;
+    color: white;
+}
+
+.tips-container tr:nth-of-type(2n) {
+    background-color: $primary-light;
+    color: white;
+}
+
+.tips-container .tdcenter {
+    text-align: center;
+}
+
+
+.report-footer {
+    width: 100%;
+    text-align: center;
+}

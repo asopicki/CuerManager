@@ -1,0 +1,103 @@
+@import 'abstracts/variables';
+
+.container {
+  display: grid;
+  grid-template-columns: 10vw 1fr 1fr;
+  grid-template-rows: 70px 1fr 20px;
+  grid-gap: 0px;
+}
+
+.App {
+	grid-row: 2 / 3;
+	grid-column: 1 / 4;
+	padding-left: 10px;
+	min-height: 80vh;
+	background-color: white;
+}
+
+@media screen {
+	.header {
+		grid-row: 1 / 2;
+		grid-column: 1 / 4;
+		padding-left: 2em;
+		padding-top: 1em;
+		border-bottom: 3px solid $primary;
+		background-color: $primary;
+	}
+	
+	.header h1 {
+		color: white;
+		display: inline;
+	}
+	
+	.topNavigation {
+		text-align: right;
+		margin-top: -2.5em;
+		margin-right: 15em;
+	}
+	
+	.topNavigation li {
+		display: inline;
+		margin-left: 15px;
+	}
+	
+	
+	.topNavigation li a { 
+		color: white;
+	}
+	
+	.topNavigation li i  {
+		color: white;
+	}
+	
+	.topNavigation li a:hover {
+		color: orange;
+	}
+
+	.footer {
+		grid-row: 4 / 5;
+		grid-column: 1 / 4;
+		text-align: center;
+		font-size: 0.8em;
+		box-shadow: 0 2px 5px 0 rgba(0,0,0,0.16),0 2px 10px 0 rgba(0,0,0,0.12);
+		background-color: white;
+	}
+	
+	.searchInput {
+	
+		margin-left: 2%;
+	}
+	
+	
+	.search label {
+		margin-left: 1em;
+		margin-right: 0.8em;
+	}
+	
+	.search input {
+		width: 30em;
+	}
+	
+	.search form button {
+		margin-left: 5px;
+	}
+	
+	.searchButtons {
+		padding-top: 2em;
+		padding-left: 5.3em;
+		display: grid;
+		grid-template-columns: repeat(1, 1fr);
+		grid-gap: 5px;
+		grid-auto-rows: minmax(30px, 50px);
+	}
+}
+
+@media print {
+	.header {
+		display: none;
+	}
+
+	.footer {
+		display: none;
+	}
+}

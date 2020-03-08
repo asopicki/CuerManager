@@ -1,0 +1,46 @@
+<form [formGroup]="newTipForm" class="form-control" novalidate>
+<h1 mat-dialog-title>{{title}}</h1>
+<div mat-dialog-content>
+  <div>
+    <label for="name">
+      Tip name:
+      <mat-form-field>
+        <input matInput placeholder="Name of the tip" cdkFocusInitial 
+          required formControlName="name" minlength="3" maxlength="255">
+      </mat-form-field>
+    </label>
+  </div>
+  <div>
+    <label for="startTime">
+      Start time:
+      <input [ngxTimepicker]="startTimePicker" placeholder="HH:mm" [format]="24" required formControlName="startTime">
+      <ngx-material-timepicker #startTimePicker ></ngx-material-timepicker>
+      <mat-error *ngIf="startTime.invalid && (startTime.dirty || startTime.touched)" class="alert alert-danger">
+        <div *ngIf="startTime.errors.required">
+          Please enter a valid start time for the tip.
+        </div>
+      </mat-error>
+    </label>
+  </div>
+  <div>
+    <label for="endTime">
+      End time:
+      <input [ngxTimepicker]="endTimePicker" placeholder="HH:mm" [format]="24" required formControlName="endTime">
+      <ngx-material-timepicker #endTimePicker ></ngx-material-timepicker>
+      <mat-error *ngIf="(endTime.invalid || newTipForm.errors?.invalidEndTime) && (endTime.dirty || endTime.touched)" 
+        class="alert alert-danger">
+        <div *ngIf="endTime.errors?.required">
+          Please enter a valid end time for the tip.
+        </div>
+        <div *ngIf="newTipForm.errors?.invalidEndTime">
+          Tip needs to end after it starts.    
+        </div>
+        </mat-error>
+    </label>
+    </div>
+</div>
+<div mat-dialog-actions>
+  <button mat-button (click)="onNoClick()">Cancel</button>
+  <button mat-button [mat-dialog-close]="newTipForm" [disabled]="!newTipForm.valid">{{buttonLabel}}</button>
+</div>
+</form>

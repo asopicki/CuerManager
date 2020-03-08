@@ -1,0 +1,45 @@
+.panel {
+    box-shadow:0 2px 5px 0 rgba(0,0,0,0.16),0 2px 10px 0 rgba(0,0,0,0.12);
+    padding: 20px;
+    text-align: left;
+    max-height: 100px;
+    min-width: 120px;
+    border-radius: 2px;
+    color: black;
+}
+
+.panel:hover {
+    background-color: #eee;
+    cursor: pointer;
+    color: #607d8b;
+}
+
+a {
+    text-decoration: none;
+}
+
+.search-control {
+    margin-bottom: 1.2em;
+}
+
+.search-control:first-of-type {
+    margin-top: 1.2em;
+}
+
+#rhythm {
+    min-width: 320px;
+    width: 420px;
+}
+
+#title {
+    width: 365px;
+}
+
+.item {
+    width: 100%;
+}
+
+.cuecard {
+    height: 100% !important;
+    width: 100%;
+}

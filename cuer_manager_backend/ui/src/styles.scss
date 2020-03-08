@@ -1,0 +1,25 @@
+/* You can add global styles to this file, and also import other style files */
+@import '~@angular/material/prebuilt-themes/deeppurple-amber.css';
+@import 'assets/css/fontawsome-all.css';
+@import 'assets/css/maticons.css';
+@import 'sass/abstracts/variables';
+
+.cdk-overlay-container { z-index: 888; }
+
+@media screen {
+    body {
+		background-color: $body;
+	}
+}
+
+.textleft {
+    text-align: left;
+}
+
+.textright {
+    text-align: right;
+}
+
+.textcenter {
+    text-align: center;
+}

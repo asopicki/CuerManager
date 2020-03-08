@@ -1,0 +1,53 @@
+<div *ngIf="loading">
+  Fetching event details....
+</div>
+<div *ngIf="event" class="grid">
+  <div class="panel event">
+    <span class="far fa-calendar-check fa-fw"></span>
+    <span class="event-name">{{event?.name}}</span>
+    <div class="event-date">Start: <span>{{event?.date_start | date:'EEE, MMM d' }}</span></div>
+    <div class="event-date">End: <span>{{event?.date_end  | date:'EEE, MMM d' }}</span></div>
+    <div><a routerLink="/events/report/{{event.uuid}}" target="_blank" class="report-link">Report of cued choreos</a></div>
+  </div>
+  <div class="panel program" *ngIf="program">
+    <span class="fa fa-tasks fa-fw"></span>
+    <span class="program-name">Program (Last updated: {{event?.program?.date_modified | date:'EEE, MMM d, H:mm'}})</span>
+    <span class="fa fa-edit fa-fw" (click)="edit(event)"></span>
+
+    <p class="program notes" [innerHtml]="event?.program?.notes">
+    </p>
+  </div>
+  <div class="add-tip-control">
+    <i class="far fa-plus-square" (click)="addTip()" title="Add new tip"> Add new tip</i>
+  </div>
+  <div class="tips-container" cdkDropListGroup>
+    <div class="panel tip" *ngFor="let tip of tips; let i = index;">
+      <div class="tip-header">
+          <span class="tip-name">{{tip.name}} ({{tip.date_start | date:'H:mm'}} - {{tip.date_end | date:'H:mm'}})</span> 
+          <span class="far fa-minus-square" title="Remove tip" (click)="removeTip(tip)"></span>
+          <span class="fa fa-edit fa-fw edit-tip" (click)="editTip(tip)" title="Edit tip"></span>
+          <app-issue-badge [issueMessages]="tipIssues" [key]="tip.uuid"></app-issue-badge>
+          <div>
+              <i class="far fa-plus-square add-new-cuecard" (click)="addCuecard(tip)" title="Add new cuecard"> Add new cuecard</i>
+          </div>    
+      </div>
+      <mat-list class="cuecard-list" cdkDropList [cdkDropListData]="tip" (cdkDropListDropped)="drop($event)">
+          <mat-list-item *ngFor="let cuecard of tip.cuecards" class="cuecard" cdkDrag [cdkDragData]="cuecard">
+                  <app-cuecard-card [cuecard]="cuecard" class="item" [tagsedit]="false" [canDelete]="true" 
+                  [cuedAt]="cuedAt(tip, cuecard)"
+                    (deleted)="removeCuecard(cuecard, tip)" (dblclick)="open(cuecard)"></app-cuecard-card>
+          </mat-list-item>
+      </mat-list>
+    </div>
+  </div>
+  <div>
+    <app-bar-chart 
+      [chartData]="rhythmChartData"
+      [chartLabels]="rhythmChartLabels"
+      [chartLegend]="rhythmChartLegend"
+      ></app-bar-chart>
+  </div>
+</div>
+<div *ngIf="!loading && !event">
+  Event not found
+</div>

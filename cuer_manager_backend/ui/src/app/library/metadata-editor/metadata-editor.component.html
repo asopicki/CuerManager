@@ -1,0 +1,87 @@
+<form [formGroup]="metaDataGroup" class="form-control" novalidate>
+    <h1 mat-dialog-title>Edit meta data</h1>
+    <div mat-dialog-content>
+        <h3>{{cueCard.title}}</h3>
+        <div>
+            <label for="choreographer">
+              Choreographer:
+              <mat-form-field>
+                <input matInput placeholder="Name(s) of the choreographer(s)" cdkFocusInitial 
+                  required formControlName="choreographer" minlength="3" maxlength="255">
+              </mat-form-field>
+            </label>
+        </div>
+        <div>
+            <label for="phase">
+              Phase:
+              <mat-form-field>
+                <mat-select formControlName="phase" required>
+                    <mat-option value="">Unknown</mat-option>
+                    <mat-option *ngFor="let phase of phases" [value]="phase">{{phase}}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </label>
+        </div>
+        <div>
+            <label for="difficulty">
+              Difficulty:
+                <mat-form-field>
+                  <input matInput placeholder="Difficulty of the choreo"  
+                    required formControlName="difficulty" minlength="3" maxlength="255">
+                </mat-form-field>
+              </label>
+        </div>
+        <div>
+            <label for="rhythm">
+              Rhythm:
+              <mat-form-field>
+                <mat-select formControlName="rhythm" required>
+                    <mat-option value="">Unknown</mat-option>
+                    <mat-option *ngFor="let rhythm of rhythms" [value]="rhythm">{{rhythm}}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </label>
+        </div>
+        <div>
+          <label for="plusfigures">
+            Plus figures:
+              <mat-form-field>
+                <input matInput placeholder="Plus figures of the choreo"  
+                  formControlName="plusfigures" maxlength="255">
+              </mat-form-field>
+          </label>
+        </div>
+        <div>
+          <label for="steplevel">
+            Step level:
+              <mat-form-field>
+                <input matInput placeholder="Step level of the choreo"  
+                  formControlName="steplevel" maxlength="10">
+              </mat-form-field>
+          </label>
+        </div>
+        <div>
+          <label for="music">
+            Music:
+              <mat-form-field>
+                <input matInput placeholder="&lt;music title&gt;, &lt;artist&gt;"  
+                  formControlName="music" maxlength="255">
+              </mat-form-field>
+          </label>
+        </div>
+        <div>
+          <label for="music_file">
+            Music file:
+              <mat-form-field>
+                <input matInput placeholder="Relative path to the music file"  
+                  formControlName="music_file" maxlength="255">
+              </mat-form-field>
+          </label>
+          <button mat-button (click)="selectMusicFile()">Select</button>
+        </div>
+    </div>
+    <div mat-dialog-actions>
+        <button mat-button (click)="onCancelClick()">Cancel</button>
+        <button mat-button [mat-dialog-close]="metaDataGroup.value" [disabled]="!metaDataGroup.valid" >Save</button>
+    </div>
+</form>

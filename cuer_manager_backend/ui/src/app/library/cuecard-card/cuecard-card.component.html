@@ -1,0 +1,30 @@
+<mat-card class="cuecard">
+    <mat-card-header>
+        <mat-card-title>
+            {{cuecard.title}}
+            <a href="{{cuecard.getLink()}}" target="{{cuecard.asTarget()}}" title="Open cuecard {{cuecard.title}} in new tab" rel="noreferrer noopener">
+                <span class="fas fa-external-link-alt fa-fw"></span>
+            </a>
+            <span *ngIf="canDelete" class="far fa-minus-square" title="Remove tip" (click)="remove()"></span>
+        </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+            <p>
+                Rhythm: {{cuecard.rhythm}} Phase: {{cuecard.phase}} {{ cuecard.meta['plusfigures'] }}
+            </p>
+            <p>
+                Steplevel: {{cuecard.steplevel}} Choreographer: {{cuecard.choreographer}}
+            </p>
+            <p class="note" *ngIf="cuedAt">
+                Cued at {{cuedAt | date:'dd.MM.yyyy - HH:mm'}}
+            </p>
+            <mat-chip-list *ngIf="tags">
+                <mat-chip *ngFor="let tag of tags">{{tag.tag}}</mat-chip>
+            </mat-chip-list>
+            <span [hidden]="!tagsedit"><i title="add or remove tags" (click)="editTags($event, cuecard)">[tags] </i></span>
+            <span [hidden]="!canEdit"><i title="edit meta data" (click)="onedit()">[edit] </i></span>
+            <span [hidden]="!showIssues || issueCount === 0" [matBadge]="issueCount" matBadgePosition="above after" matBadgeOverlap="false"
+                [matBadgeHidden]="!showIssues || issueCount == 0" [matBadgeDescription]="issueDescription" 
+                [matTooltip]="issueDescription" matTooltipPosition="right" > [warnings]</span>
+    </mat-card-content>
+</mat-card>

@@ -1,0 +1,3 @@
+<span *ngIf="issueCount() > 0" [matBadge]="issueCount()" matBadgePosition="above after" matBadgeOverlap="false"
+    [matBadgeHidden]="!issueCount()" [matBadgeDescription]="issues()" matTooltipClass="issue-badge-issues" 
+    matBadgeColor="warn" [matTooltip]="issues()" matTooltipPosition="right" ><i class="fas fa-exclamation-triangle"></i></span>

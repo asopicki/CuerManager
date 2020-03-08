@@ -1,0 +1,37 @@
+.search-control {
+    margin-bottom: 1.2em;
+}
+
+.search-control:first-of-type {
+    margin-top: 1.2em;
+}
+
+#rhythm {
+    min-width: 320px;
+    width: 420px;
+}
+
+#title {
+    width: 365px;
+}
+
+.item {
+    width: 100%;
+}
+
+.cuecard {
+    height: 100% !important;
+    width: 100%;
+}
+
+.list-viewport {
+    height: 800px;
+    width: 100%;
+    scrollbar-width: none;
+    
+}
+
+.list-viewport::-webkit-scrollbar {
+    display: none;
+}
+

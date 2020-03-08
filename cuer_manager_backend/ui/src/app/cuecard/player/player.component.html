@@ -1,0 +1,44 @@
+<div>
+    <button (click)="loadMusicFile()" [disabled]="loadDisabled" title="Load associated music file (l)"><i class="fas fa-music"></i></button>
+    <label for="external_file"  title="Load external file">
+        <i class="fa fa-eject"></i>
+
+        <input type="file" id="external_file" accept="audio/*" (change)="loadExternalFile($event)" />
+    </label>
+    <button (click)="play()" [disabled]="playDisabled" title="Play file (p)" id="play-button"><i class="far fa-play-circle"></i></button>
+    <button (click)="stop()" [disabled]="stopDisabled" title="Stop playback (s)" autocomplete="off" id="stop-button">
+        <i class="far fa-stop-circle"></i>
+    </button>
+    <button (click)="save()" title="Save recorded cues"><i class="far fa-save"></i></button>
+    <label class="label" for="record">
+        Record cues
+        <input type="checkbox" name="record" id="record" [(checked)]="recordCues" (change)="toggleRecording()"
+            title="Record cues for karaoke mode on playback (r)"/>
+        <span class="checkmark"></span>
+    </label>
+    <p class="playback_rate">
+       <input type="range" name="playbackRate" min="80" max="130" [(value)]="playbackRate" step="1" 
+       (change)="playRateChange($event)" (dblclick)="resetRate()" list="tickmarks"/>
+       Speed: {{playbackRate}}%
+
+       <datalist id="tickmarks">
+           <option value="80" ></option>
+           <option value="90" ></option>
+           <option value="100" ></option>
+           <option value="110" ></option>
+           <option value="120" ></option>
+           <option value="130" ></option>
+       </datalist>
+    </p>
+    <p>
+        <progress id="progressMeter" [value]="percentage" max="100" (click)="changePerc($event)"></progress>
+
+        {{trackTime * 1000 | date:'mm:ss'}}
+        {{length * 1000 | date:'mm:ss'}}
+    </p>
+    <details>
+        <summary>Note</summary>
+        While recording cues tap <span class="letter">c</span> to proceed to the next cue. To enable/disable
+        recording press <span class="letter">r</span>.
+    </details>
+</div>

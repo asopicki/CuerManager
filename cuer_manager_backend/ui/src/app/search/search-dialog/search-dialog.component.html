@@ -1,0 +1,43 @@
+<form [formGroup]="searchForm" class="form-control" novalidate>
+  <h1 mat-dialog-title>Pick a cuecard to add</h1>
+  <div mat-dialog-content>
+    <div>
+      <label for="phase">
+        Search by phase:
+        <button *ngFor="let phase of phases;" mat-button (click)="searchPhase(phase)" id="phase">Phase {{phase}}</button>
+      </label>
+    </div>
+    <div>
+      <label for="phrase">
+        Search by title or figure:
+        <input matInput placeholder="Enter title to search for" id="phrase" formControlName="title">
+      </label>
+    </div>
+    <div>
+      <label for="rhythm">
+        Search by rhythm:
+        <mat-select (selectionChange)="rhythmChanged($event)" placeholder="Select rhythm to search for">
+          <mat-option></mat-option>
+          <mat-option *ngFor="let rhythm of rhythms" value="{{rhythm}}">{{rhythm}}</mat-option>
+        </mat-select>
+      </label>
+    </div>
+    <div>
+      <mat-divider></mat-divider>
+    </div>
+    <div>
+      <mat-form-field style="width: 100%">
+        <mat-select [formControl]="cuecard" cdkFocusInitial required placeholder="Select a cuecard">
+          <mat-option *ngIf="!cuecards"></mat-option>
+          <mat-option *ngFor="let cuecard of cuecards;" [value]="cuecard">
+            {{cuecard.title}} (P: {{cuecard.phase}} R: {{cuecard.rhythm}})
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+  <div mat-dialog-actions>
+    <button mat-button (click)="onNoClick()">Cancel</button>
+    <button mat-button [mat-dialog-close]="cuecard.value" [disabled]="!searchForm.valid">Add</button>
+  </div>
+</form>

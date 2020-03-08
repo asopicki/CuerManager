@@ -1,0 +1,33 @@
+<div class="search-form">
+  <form [formGroup]="searchForm" class="form-control" novalidate>
+    <div class="search-control">
+      <label for="phase">
+        Search by phase:
+        <button mat-raised-button *ngFor="let phase of phases;" (click)="searchPhase(phase)" id="phase">Phase {{phase}}</button>
+      </label>
+    </div>
+    <div class="search-control">
+      <label for="phrase">
+        Search by title or figure:
+        <input matInput placeholder="Enter title to search for" id="phrase" formControlName="title" >
+      </label>
+    </div>
+    <div class="search-control">
+      <label for="rhythm">
+        Search by rhythm:
+        <mat-select (selectionChange)="rhythmChanged($event)" placeholder="Select rhythm to search for" formControlName="rhythm" id="rhythm">
+          <mat-option></mat-option>
+          <mat-option *ngFor="let rhythm of rhythms" value="{{rhythm}}">{{rhythm}}</mat-option>
+        </mat-select>
+      </label>
+    </div>
+  </form>
+</div>
+
+<div id="search-result">
+  <mat-list class="list">
+      <mat-list-item *ngFor="let cuecard of cuecards" class="cuecard">
+              <app-cuecard-card [cuecard]="cuecard" class="item" (dblclick)="open(cuecard)"></app-cuecard-card>
+      </mat-list-item>
+  </mat-list>
+</div>

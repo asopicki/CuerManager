@@ -1,0 +1,65 @@
+@import 'abstracts/variables';
+
+@keyframes slidein {
+    from { 
+        transform: translateX(-90%);
+    }
+    to   { 
+        transform: translateX(0%);
+    }
+}
+
+#player {
+    position: fixed;
+    z-index: 100;
+    margin-left: 50em;
+    margin-top: 2em;
+}
+
+
+:host ::ng-deep span.highlight {
+    background-color: $primary-dark; 
+    color: white;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.hidden {
+    display: none;
+}
+
+.visible {
+    display: block;
+    animation: 0.8s slidein;
+}
+
+blockquote[contenteditable='true'] {
+    outline: solid lightblue;
+}
+
+#markdown {
+    width: 60%;
+}
+
+.box {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.edit-panel {
+    margin-top: .5em;
+}
+
+button {
+    background-color: $primary;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 1.2em;
+    margin-right: 0.2em;
+    border-radius: 0.2em;
+}
+
+button:disabled {
+    background-color: $primary-light;
+}

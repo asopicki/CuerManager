@@ -1,0 +1,89 @@
+<form [formGroup]="newEventForm" class="form-control" novalidate>
+<h1 mat-dialog-title>Create new event</h1>
+<div mat-dialog-content>
+  <div>
+    <label for="name">
+      Name:
+      <mat-form-field>
+        <input matInput placeholder="Name of the event" cdkFocusInitial required 
+          formControlName="name" minlength="3" maxLength="255">
+      </mat-form-field>
+      <div *ngIf="name.invalid && (name.dirty || name.touched)" class="alert alert-danger">
+        <div *ngIf="name.errors.required">
+          Please enter a name for the event.
+        </div>
+        <div *ngIf="name.errors.minlength">
+          Name must be at least 3 characters long.
+        </div>
+      </div>
+    </label>
+  </div>
+  <div>
+    <label for="startDate">
+      Start date:
+      <mat-form-field>
+        <input matInput [matDatepicker]="startPicker" placeholder="Choose a date" required 
+          formControlName="startDate" (dateChange)="onDateChanged(newEventForm)">
+        <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+        <mat-datepicker #startPicker></mat-datepicker>
+      </mat-form-field>
+      <div *ngIf="startDate.invalid && (startDate.dirty || startDate.touched)" class="alert alert-danger">
+        <div *ngIf="startDate.errors.required">
+          Please enter a valid start date for the event.
+        </div>
+      </div>
+    </label>
+  </div>
+  <div>
+    <label for="startTime">
+      Start time:
+      <input [ngxTimepicker]="startTimePicker" placeholder="HH:mm" [format]="24" required formControlName="startTime">
+      <ngx-material-timepicker #startTimePicker enableKeyboardInput=true ></ngx-material-timepicker>
+      <div *ngIf="startTime.invalid && (startTime.dirty || startTime.touched)" class="alert alert-danger">
+        <div *ngIf="startTime.errors.required">
+          Please enter a valid start time for the event.
+        </div>
+      </div>
+    </label>
+  </div>
+  <div>
+    <label for="endDate">
+      End date:
+      <mat-form-field>
+        <input matInput [matDatepicker]="endPicker" placeholder="Choose a date" required 
+          formControlName="endDate">
+        <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+        <mat-datepicker #endPicker></mat-datepicker>
+      </mat-form-field>
+      <div *ngIf="(endDate.invalid || newEventForm.errors?.invalidEndDate) && (endDate.dirty || endDate.touched)" class="alert alert-danger">
+        <div *ngIf="endDate.errors?.required">
+          Please enter a valid end date for the event.
+        </div>
+        <div *ngIf="newEventForm.errors?.invalidEndDate">
+            End date needs to be after start date.    
+          </div>
+      </div>
+    </label>
+  </div>
+  <div>
+    <label for="endTime">
+      End time:
+      <input [ngxTimepicker]="endTimePicker" placeholder="HH:mm" [format]="24" required formControlName="endTime">
+      <ngx-material-timepicker #endTimePicker ></ngx-material-timepicker>
+      <div *ngIf="(endTime.invalid || newEventForm.errors?.invalidEndTime) && (endTime.dirty || endTime.touched)" 
+        class="alert alert-danger">
+        <div *ngIf="endTime.errors?.required">
+          Please enter a valid end time for the event.
+        </div>
+        <div *ngIf="newEventForm.errors?.invalidEndTime">
+          Event needs to end after it starts.    
+        </div>
+      </div>
+    </label>
+  </div>
+</div>
+<div mat-dialog-actions>
+  <button mat-button (click)="onNoClick()">Cancel</button>
+  <button mat-button [disabled]="!newEventForm.valid" [mat-dialog-close]="newEventForm.value">Add</button>
+</div>
+</form>

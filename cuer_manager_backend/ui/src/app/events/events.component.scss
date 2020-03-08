@@ -1,0 +1,15 @@
+@import 'abstracts/variables';
+
+.calendar-icon {
+    color: $primary-dark;
+}
+
+.event:hover {
+    background-color: $primary-dark;
+    cursor: pointer;
+    color: white;
+}
+
+.card-title {
+    font-size: 1.3em;
+}

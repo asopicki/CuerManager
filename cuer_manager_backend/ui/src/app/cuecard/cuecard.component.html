@@ -1,0 +1,13 @@
+<div class="edit-panel">
+    <button name="edit" (click)="edit(cuecard)" [class]="editButtonClasses" title="Edit cuecard"><span class="fa fa-edit fa-fw"></span></button>
+    <button name="save" (click)="saveCuecard(cuecard)" [class]="saveButtonClasses" title="Save changes"><span class="far fa-save"></span></button>
+</div>
+<div id="player" [class]="playerClasses">
+    <app-player [cuecard]="cuecard"  [percentage]="perc" (stateChanged)="onPlayerStateChanged($event)"></app-player>
+</div>
+<div class="box">
+    <blockquote [class]="markdownClasses" style="overflow: hidden;" [attr.contenteditable]="editable" id="markdown"
+        #area (keyup)="parse($event, area)"></blockquote>
+    <div style="overflow: hidden;" [class]="cuecardClasses" id="cuecard">
+    </div>
+</div>

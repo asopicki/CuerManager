@@ -1,0 +1,108 @@
+@import 'abstracts/variables';
+
+.panel {
+  width: 100%;
+}
+
+.event-name {
+  font-size: 1.3em;
+  color: $primary-dark;
+}
+
+.event-date {
+  color: $primary-light;
+  font-style: italic;
+  font-size: 0.9em;
+}
+
+.report-link {
+  color: $primary-light;
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.event.panel {
+  box-shadow:0 2px 5px 0 rgba(0,0,0,0.16),0 2px 10px 0 rgba(0,0,0,0.12);
+  padding: 20px;
+  text-align: center;
+  border-radius: 2px;
+  color: black;
+  margin-bottom: 0.9em;
+}
+
+.program.panel {
+  box-shadow:0 2px 5px 0 rgba(0,0,0,0.16),0 2px 10px 0 rgba(0,0,0,0.12);
+  padding: 20px;
+  text-align: center;
+  border-radius: 2px;
+  color: black;
+  margin-bottom: 0.9em;
+}
+
+.program.notes {
+  text-align: left;
+}
+
+.event.title {
+    text-align: center;
+    margin-bottom: 0;
+  }
+  
+
+.textbold {
+  font-style: italic;
+  font-weight: bold;
+}
+ 
+.panel.tip {
+  box-shadow:0 2px 5px 0 rgba(0,0,0,0.16),0 2px 10px 0 rgba(0,0,0,0.12);
+  padding: 20px;
+  border-radius: 2px;
+  color: black;
+  margin-bottom: 0.9em;
+}
+.tip-header { 
+  text-align: center;
+}
+
+.add-tip-control {
+  text-align: center;
+  margin-bottom: 0.8em;
+}
+
+.add-new-cuecard {
+  font-size: 0.8em;
+}
+
+.tip-name { margin-right: 0.6em; font-size: 1.3em; }
+
+.cdk-drag-preview {
+  box-sizing: border-box;
+  border-radius: 4px;
+  box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+              0 8px 10px 1px rgba(0, 0, 0, 0.14),
+              0 3px 14px 2px rgba(0, 0, 0, 0.12);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.cuecard-list.cdk-drop-list-dragging .cuecard-item:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.item {
+  width: 100%;
+}
+
+.cuecard {
+  height: 100% !important;
+  width: 100%;
+}
+
