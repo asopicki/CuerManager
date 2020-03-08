@@ -132,6 +132,18 @@ pub struct FormCuecardContent {
     content: String
 }
 
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct Settings {
+   pub minutes_per_tip: u32
+}
+
+#[get("/v2/settings")]
+pub fn get_settings(config: State<BackendConfig>) -> Result<Json<Settings>, Status> {
+    let settings = Settings { minutes_per_tip: config.minutes_per_tip};
+    
+    Ok(Json(settings))
+}
+
 #[get("/v2/cuecards/<uuid>/content")]
 pub fn cuecard_content_by_uuid(
     uuid: String,

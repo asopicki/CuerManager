@@ -4,6 +4,7 @@ music_files_dir = "/home/music/collection"
 indexer_path = "target/debug/cuecard_indexer"
 cuecards_lib_dir = "/home/alex/projects/CuerManager/cuecards"
 cuecards_self_managed = false
+minutes_per_tip = 20
 
 [development]
 port = 8087

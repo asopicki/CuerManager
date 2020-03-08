@@ -89,7 +89,8 @@ fn rocket() -> rocket::Rocket {
                 routes::add_tag,
                 routes::remove_tag,
                 routes::convert_odt_file,
-                routes::list_music_files
+                routes::list_music_files,
+                routes::get_settings
             ],
         )
         .attach(AdHoc::on_attach("Backend Config", |rocket| {
@@ -122,12 +123,15 @@ fn rocket() -> rocket::Rocket {
                 .get_bool("cuecards_self_managed")
                 .unwrap_or(false);
 
+            let minutes_per_tip: u32 = rocket.config().get_int("minutes_per_tip").unwrap_or(15) as u32;
+
             Ok(rocket.manage(BackendConfig {
                 music_files_dir,
                 cuecards_lib_dir,
                 indexer_path,
                 db_url,
-                cuecards_self_managed
+                cuecards_self_managed,
+                minutes_per_tip
             }))
         }))
 }

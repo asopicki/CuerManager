@@ -8,6 +8,7 @@ pub struct BackendConfig {
     pub cuecards_lib_dir: String,
     pub db_url: String,
     pub cuecards_self_managed: bool,
+    pub minutes_per_tip: u32,
 }
 
 #[derive(Debug)]
