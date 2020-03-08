@@ -14,6 +14,8 @@ else
 fi
 
 cd cuer_manager_backend/ui
+echo "Installing NPM packages"
+npm install
 echo "Building web frontend ..."
 ng build --prod --deploy-url=static/
 
